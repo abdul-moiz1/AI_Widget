@@ -4,6 +4,21 @@
 // Do not try to run this in the browser or Replit frontend.
 
 /**
+ * HYBRID STATE MODEL ARCHITECTURE:
+ * 
+ * Widget (client-side):
+ * - Maintains in-memory buffer of last 3-5 turns for speed
+ * - Stores sessionId in localStorage using crypto.randomUUID()
+ * - Sends: { sessionId, message, recentMessages: [...] }
+ * - Does NOT access Firestore directly (no API keys exposed)
+ * 
+ * Backend (this Cloud Function):
+ * - Receives recentMessages for context/context awareness
+ * - Queries Firestore for full conversation history by sessionId
+ * - Appends new user+AI messages atomically to conversations/{sessionId}
+ * - Firestore is source of truth for complete business history
+ * - Non-blocking: widget gets instant response, persistence happens async
+ * 
  * DEPLOYMENT INSTRUCTIONS:
  * 1. Set up a Firebase project.
  * 2. Enable Cloud Functions and Firestore.
@@ -42,21 +57,25 @@ exports.chat = functions.https.onRequest(async (req, res) => {
   }
 
   try {
-    const { sessionId, userMessage, persona, language } = req.body;
+    const { sessionId, message, recentMessages = [], persona = "assistant", language = "en" } = req.body;
 
-    if (!sessionId || !userMessage) {
-      res.status(400).json({ error: "Missing required fields" });
+    if (!sessionId || !message) {
+      res.status(400).json({ error: "Missing required fields: sessionId and message" });
       return;
     }
 
     const docRef = db.collection("conversations").doc(sessionId);
     const doc = await docRef.get();
 
-    let history = [];
+    // Get full history from Firestore (source of truth)
+    let fullHistory = [];
     if (doc.exists) {
       const data = doc.data();
-      history = data.messages || [];
+      fullHistory = data.messages || [];
     }
+    
+    // Use recentMessages from widget if available (for faster context), else use full history
+    const history = recentMessages.length > 0 ? recentMessages : fullHistory;
 
     // Construct prompt with history
     const systemPrompt = PERSONA_PROMPTS[persona] || PERSONA_PROMPTS.assistant;
@@ -81,23 +100,34 @@ exports.chat = functions.https.onRequest(async (req, res) => {
       ],
     });
 
-    const result = await chat.sendMessage(userMessage);
+    const result = await chat.sendMessage(message);
     const responseText = result.response.text();
 
-    // Update Firestore
+    // Persist to Firestore asynchronously (non-blocking)
     const newMessages = [
-      { role: "user", text: userMessage, timestamp: new Date().toISOString() },
+      { role: "user", text: message, timestamp: new Date().toISOString() },
       { role: "assistant", text: responseText, timestamp: new Date().toISOString() }
     ];
 
-    await docRef.set({
+    // Fire-and-forget: don't await, return immediately for responsiveness
+    docRef.set({
+      sessionId,
       persona,
       language,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       messages: admin.firestore.FieldValue.arrayUnion(...newMessages)
-    }, { merge: true });
+    }, { merge: true }).catch(err => {
+      console.error(`Failed to persist conversation ${sessionId}:`, err);
+    });
 
-    res.json({ text: responseText });
+    // Return immediately with AI response
+    res.json({ 
+      reply: responseText,
+      // Include sessionId in response for client confirmation
+      sessionId,
+      messageCount: fullHistory.length + 2
+    });
 
   } catch (error) {
     console.error("Error processing chat:", error);

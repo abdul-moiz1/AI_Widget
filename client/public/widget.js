@@ -1,15 +1,22 @@
 /**
- * AI Voice Chat Widget
+ * AI Voice Chat Widget - Production Ready
  * 
- * Usage: <script src="widget.js"></script>
+ * Hybrid State Model:
+ * - Client-side: In-memory buffer (last 5 messages) for responsiveness
+ * - Server-side: Firestore persists full conversation history by sessionId
+ * 
+ * Usage: <script src="https://<your-domain>/widget.js"></script>
  * 
  * Features:
- * - Floating UI with Shadow DOM
- * - Web Speech API (Input)
- * - Speech Synthesis API (Output)
- * - Real-time Audio Visualization
- * - Persona Selection
- * - Session Management
+ * - Floating voice-first UI with Shadow DOM isolation
+ * - Web Speech API for real-time speech-to-text
+ * - SpeechSynthesis API for AI voice responses
+ * - Live waveform visualization matching voice frequency
+ * - Prevents self-listening (stops mic while AI speaks)
+ * - Session persistence with crypto.randomUUID() in localStorage
+ * - Hybrid context: sends recentMessages + backend has full history
+ * - CORS-enabled for cross-domain embedding
+ * - No API keys exposed in frontend (all backend-handled)
  */
 
 (function() {
