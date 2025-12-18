@@ -36,6 +36,8 @@
       this.isSpeaking = false;
       this.sessionId = this.getSessionId();
       this.messages = [];
+      this.conversationBuffer = []; // In-memory buffer for last 3-5 turns
+      this.maxBufferSize = 5; // Keep last 5 turns (user + AI pairs)
       this.persona = 'assistant';
       this.recognition = null;
       this.synthesis = window.speechSynthesis;
@@ -59,12 +61,42 @@
     }
 
     getSessionId() {
-      let id = sessionStorage.getItem('ai-widget-session');
+      // Use localStorage for persistent sessions across page reloads
+      let id = localStorage.getItem('ai-widget-session-id');
       if (!id) {
-        id = 'sess_' + Math.random().toString(36).substr(2, 9);
-        sessionStorage.setItem('ai-widget-session', id);
+        // Use crypto.randomUUID() for unique session IDs
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          id = crypto.randomUUID();
+        } else {
+          // Fallback for browsers without crypto.randomUUID
+          id = 'sess_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        }
+        localStorage.setItem('ai-widget-session-id', id);
+        console.log('✅ New session created:', id);
+      } else {
+        console.log('✅ Existing session loaded:', id);
       }
       return id;
+    }
+
+    addToBuffer(role, text) {
+      // Add message to in-memory buffer
+      this.conversationBuffer.push({ role, text, timestamp: Date.now() });
+      
+      // Keep only last N turns (messages)
+      if (this.conversationBuffer.length > this.maxBufferSize) {
+        this.conversationBuffer.shift();
+      }
+      
+      console.log('📝 Buffer updated:', this.conversationBuffer.length, 'messages');
+    }
+
+    getRecentMessages() {
+      // Return the in-memory buffer as recentMessages for the backend
+      return this.conversationBuffer.map(msg => ({
+        role: msg.role,
+        text: msg.text
+      }));
     }
 
     loadVoices() {
@@ -334,8 +366,9 @@
     async handleUserMessage(text) {
       if (!text.trim()) return;
 
-      // Add user message
+      // Add user message to UI and buffer
       this.addMessage('user', text);
+      this.addToBuffer('user', text);
       
       // Clear input
       const inputEl = this.shadowRoot.getElementById('chat-input');
@@ -353,14 +386,21 @@
           await new Promise(r => setTimeout(r, 1500));
           responseText = this.getMockResponse(text, this.persona);
         } else {
-          console.log('Sending to backend:', CONFIG.backendUrl, { sessionId: this.sessionId, userMessage: text, persona: this.persona });
+          // Get recent messages from buffer for context
+          const recentMessages = this.getRecentMessages();
           
           const payload = {
             sessionId: this.sessionId,
-            message: text
+            message: text,
+            recentMessages: recentMessages
           };
           
-          console.log('Payload:', payload);
+          console.log('🚀 Sending to backend:', { 
+            sessionId: this.sessionId, 
+            message: text,
+            bufferSize: recentMessages.length,
+            recentMessages: recentMessages
+          });
           
           const res = await fetch(CONFIG.backendUrl, {
             method: 'POST',
@@ -385,7 +425,9 @@
           }
         }
 
+        // Add AI response to UI and buffer
         this.addMessage('assistant', responseText);
+        this.addToBuffer('assistant', responseText);
         this.speak(responseText);
 
       } catch (err) {
