@@ -15,7 +15,7 @@
 (function() {
   const CONFIG = {
     backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint
-    mockBackend: true, // Temporarily enabled for testing - set to false when backend works
+    mockBackend: false, // Set to false when backend is ready
     theme: {
       primary: '#00e5ff',
       secondary: '#2d3748',
@@ -299,10 +299,10 @@
           }
           
           const data = await res.json();
-          if (!data.text) {
+          responseText = data.reply || data.text || data.response || '';
+          if (!responseText) {
             throw new Error('No response text from backend');
           }
-          responseText = data.text;
         }
 
         this.addMessage('assistant', responseText);
