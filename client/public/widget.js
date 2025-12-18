@@ -102,37 +102,63 @@
       this.recognition.interimResults = true;
       this.recognition.lang = navigator.language || 'en-US';
       this.recognition.maxAlternatives = 1;
+      this.listeningActive = false;
 
       this.recognition.onstart = () => {
+        console.log('🎤 Speech recognition started');
         this.isListening = true;
+        this.listeningActive = true;
         this.updateUIState();
         this.startVisualizer();
       };
 
       this.recognition.onend = () => {
-        this.isListening = false;
-        this.stopVisualizer();
-        this.updateUIState();
-        // If we stopped listening but didn't process (e.g. silence), just reset.
-        // If we are processing, that state is handled in onresult
+        console.log('🎤 Speech recognition ended');
+        // Auto-restart if still supposed to be listening
+        if (this.listeningActive) {
+          console.log('🎤 Restarting recognition...');
+          setTimeout(() => {
+            try {
+              this.recognition.start();
+            } catch (e) {
+              console.error('Failed to restart:', e);
+            }
+          }, 100);
+        } else {
+          this.isListening = false;
+          this.stopVisualizer();
+          this.updateUIState();
+        }
       };
 
       this.recognition.onresult = (event) => {
+        console.log('🎤 Result received', { isFinal: event.results[event.results.length - 1].isFinal });
         let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           transcript += event.results[i][0].transcript;
         }
 
+        console.log('🎤 Transcript:', transcript);
+
         const inputEl = this.shadowRoot.getElementById('chat-input');
         if (inputEl) inputEl.value = transcript;
 
-        if (event.results[event.results.length - 1].isFinal) {
+        if (event.results[event.results.length - 1].isFinal && transcript.trim()) {
+          this.listeningActive = false;
           this.handleUserMessage(transcript);
         }
       };
 
       this.recognition.onerror = (event) => {
-        console.error('Speech recognition error', event.error);
+        console.error('🎤 Speech recognition error:', event.error);
+        
+        // Ignore temporary errors, just keep listening
+        if (event.error === 'no-speech' || event.error === 'audio-capture') {
+          console.log('🎤 Temporary error, continuing to listen...');
+          return;
+        }
+        
+        this.listeningActive = false;
         this.isListening = false;
         this.stopVisualizer();
         this.updateUIState();
@@ -140,8 +166,6 @@
         // Show user-friendly error messages
         if (event.error === 'not-allowed') {
           this.addMessage('assistant', '🎤 Microphone access denied. Please allow microphone access in your browser settings.');
-        } else if (event.error === 'no-speech') {
-          this.addMessage('assistant', '🎤 No speech detected. Please try again or type your message instead.');
         } else if (event.error === 'network') {
           this.addMessage('assistant', '🎤 Network error. Please check your connection and try again.');
         }
