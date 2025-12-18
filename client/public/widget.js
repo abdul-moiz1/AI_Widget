@@ -318,8 +318,9 @@
 
       } catch (err) {
         console.error('API Error:', err);
-        this.addMessage('assistant', "I'm having trouble connecting right now. Please try again.");
-        this.speak("I'm having trouble connecting right now.");
+        const errorMsg = err.message || String(err);
+        this.addMessage('assistant', `❌ Error: ${errorMsg}`);
+        this.speak("I'm having trouble connecting right now. Please try again.");
       } finally {
         this.isProcessing = false;
         this.updateUIState();
