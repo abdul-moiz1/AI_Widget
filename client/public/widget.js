@@ -14,8 +14,8 @@
 
 (function() {
   const CONFIG = {
-    backendUrl: 'https://us-central1-YOUR-PROJECT.cloudfunctions.net/chat', // Replace with your actual endpoint
-    mockBackend: true, // Set to false when backend is ready
+    backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint
+    mockBackend: false, // Set to false when backend is ready
     theme: {
       primary: '#00e5ff',
       secondary: '#2d3748',
