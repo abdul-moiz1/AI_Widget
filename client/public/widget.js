@@ -174,18 +174,42 @@
 
     toggleListening() {
       if (this.isListening) {
-        this.recognition.stop();
+        console.log('🎤 Stopping listening...');
+        this.listeningActive = false;
+        this.isListening = false;
+        try {
+          this.recognition.stop();
+        } catch (err) {
+          console.error('Error stopping recognition:', err);
+        }
+        this.stopVisualizer();
+        this.updateUIState();
       } else {
+        console.log('🎤 Starting listening...');
         // Resume AudioContext if suspended (browser policy)
         if (this.audioContext && this.audioContext.state === 'suspended') {
           this.audioContext.resume();
         }
         
+        // Connect microphone to analyser for real-time frequency data
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => {
+            console.log('🎤 Microphone access granted');
+            const source = this.audioContext.createMediaStreamSource(stream);
+            source.connect(this.analyser);
+          })
+          .catch(err => {
+            console.error('🎤 Mic access error:', err);
+            this.addMessage('assistant', '🎤 Microphone access denied. Please allow microphone access in your browser settings.');
+          });
+        
         try {
+          this.listeningActive = true;
           this.recognition.start();
         } catch (err) {
           console.error('Failed to start speech recognition:', err);
           this.addMessage('assistant', '🎤 Speech recognition not available. Please use text input instead.');
+          this.listeningActive = false;
         }
       }
     }
