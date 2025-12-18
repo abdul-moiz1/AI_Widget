@@ -22,7 +22,7 @@
 
 (function() {
   const CONFIG = {
-    backendUrl: '/api/voice', // Local Express endpoint
+    backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint only
     theme: {
       primary: '#00e5ff',
       secondary: '#2d3748',
@@ -125,7 +125,7 @@
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       this.recognition = new SpeechRecognition();
-      this.recognition.continuous = true;
+      this.recognition.continuous = false;
       this.recognition.interimResults = true;
       this.recognition.lang = navigator.language || 'en-US';
       this.recognition.maxAlternatives = 1;
@@ -171,6 +171,9 @@
 
         if (event.results[event.results.length - 1].isFinal && transcript.trim()) {
           this.listeningActive = false;
+          this.isListening = false;
+          this.stopVisualizer();
+          this.updateUIState();
           this.handleUserMessage(transcript);
         }
       };
@@ -178,7 +181,14 @@
       this.recognition.onerror = (event) => {
         console.error('🎤 Speech recognition error:', event.error);
         if (event.error === 'no-speech' || event.error === 'audio-capture') {
-          console.log('🎤 Temporary error, continuing to listen...');
+          console.log('🎤 No speech detected, restarting...');
+          if (this.listeningActive) {
+            try {
+              this.recognition.start();
+            } catch (e) {
+              console.error('Failed to restart:', e);
+            }
+          }
           return;
         }
         
