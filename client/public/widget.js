@@ -287,7 +287,7 @@
           
           const payload = {
             sessionId: this.sessionId,
-            userMessage: text
+            message: text
           };
           
           console.log('Payload:', payload);
