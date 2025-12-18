@@ -182,6 +182,9 @@
           this.listeningActive = false;
           this.isListening = false;
           this.stopVisualizer();
+          try {
+            this.recognition.abort();
+          } catch (e) {}
           this.handleUserMessage(transcript);
         } else if (!event.results[event.results.length - 1].isFinal) {
           // Set timeout to stop listening after silence
@@ -191,7 +194,6 @@
               this.listeningActive = false;
               this.isListening = false;
               this.stopVisualizer();
-              this.updateUIState();
               try {
                 this.recognition.abort();
               } catch (e) {}
@@ -384,6 +386,9 @@
 
       this.isProcessing = true;
       this.updateUIState();
+      
+      // Ensure processing state is visible for at least 500ms
+      await new Promise(r => setTimeout(r, 500));
 
       try {
         let responseText;
