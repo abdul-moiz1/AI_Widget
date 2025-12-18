@@ -22,7 +22,7 @@
 
 (function() {
   const CONFIG = {
-    backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint only
+    backendUrl: '/api/voice', // Local Express endpoint
     theme: {
       primary: '#00e5ff',
       secondary: '#2d3748',
