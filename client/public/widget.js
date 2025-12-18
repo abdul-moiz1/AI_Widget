@@ -182,23 +182,7 @@
           this.listeningActive = false;
           this.isListening = false;
           this.stopVisualizer();
-          try {
-            this.recognition.abort();
-          } catch (e) {}
           this.handleUserMessage(transcript);
-        } else if (!event.results[event.results.length - 1].isFinal) {
-          // Set timeout to stop listening after silence
-          this.silenceTimeout = setTimeout(() => {
-            if (this.listeningActive && this.isListening) {
-              console.log('🎤 Silence detected, stopping listening');
-              this.listeningActive = false;
-              this.isListening = false;
-              this.stopVisualizer();
-              try {
-                this.recognition.abort();
-              } catch (e) {}
-            }
-          }, this.silenceDuration);
         }
       };
 
