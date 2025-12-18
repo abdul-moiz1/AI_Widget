@@ -15,7 +15,7 @@
 (function() {
   const CONFIG = {
     backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint
-    mockBackend: false, // Set to false when backend is ready
+    mockBackend: true, // Temporarily enabled for testing - set to false when backend works
     theme: {
       primary: '#00e5ff',
       secondary: '#2d3748',
@@ -293,7 +293,15 @@
               language: navigator.language
             })
           });
+          
+          if (!res.ok) {
+            throw new Error(`Backend error: ${res.status} ${res.statusText}`);
+          }
+          
           const data = await res.json();
+          if (!data.text) {
+            throw new Error('No response text from backend');
+          }
           responseText = data.text;
         }
 
