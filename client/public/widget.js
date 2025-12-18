@@ -283,6 +283,8 @@
           await new Promise(r => setTimeout(r, 1500));
           responseText = this.getMockResponse(text, this.persona);
         } else {
+          console.log('Sending to backend:', CONFIG.backendUrl, { sessionId: this.sessionId, userMessage: text, persona: this.persona });
+          
           const res = await fetch(CONFIG.backendUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -294,14 +296,20 @@
             })
           });
           
+          console.log('Backend response status:', res.status, res.statusText);
+          
           if (!res.ok) {
-            throw new Error(`Backend error: ${res.status} ${res.statusText}`);
+            const errorText = await res.text();
+            console.error('Backend error response:', errorText);
+            throw new Error(`Backend error: ${res.status} ${res.statusText} - ${errorText}`);
           }
           
           const data = await res.json();
+          console.log('Backend response data:', data);
+          
           responseText = data.reply || data.text || data.response || '';
           if (!responseText) {
-            throw new Error('No response text from backend');
+            throw new Error(`No response text from backend. Response was: ${JSON.stringify(data)}`);
           }
         }
 
