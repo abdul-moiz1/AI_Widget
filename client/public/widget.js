@@ -285,15 +285,17 @@
         } else {
           console.log('Sending to backend:', CONFIG.backendUrl, { sessionId: this.sessionId, userMessage: text, persona: this.persona });
           
+          const payload = {
+            sessionId: this.sessionId,
+            userMessage: text
+          };
+          
+          console.log('Payload:', payload);
+          
           const res = await fetch(CONFIG.backendUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sessionId: this.sessionId,
-              userMessage: text,
-              persona: this.persona,
-              language: navigator.language
-            })
+            body: JSON.stringify(payload)
           });
           
           console.log('Backend response status:', res.status, res.statusText);
