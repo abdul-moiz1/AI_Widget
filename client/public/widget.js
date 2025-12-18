@@ -43,8 +43,8 @@
       this.isSpeaking = false;
       this.sessionId = this.getSessionId();
       this.messages = [];
-      this.conversationBuffer = []; // In-memory buffer for last 3-5 turns
-      this.maxBufferSize = 5; // Keep last 5 turns (user + AI pairs)
+      this.conversationBuffer = []; // In-memory buffer for last turns
+      this.maxBufferSize = 10; // Keep last 10 messages for better context (user + AI)
       this.persona = 'assistant';
       this.recognition = null;
       this.synthesis = window.speechSynthesis;
@@ -87,15 +87,15 @@
     }
 
     addToBuffer(role, text) {
-      // Add message to in-memory buffer
+      // Add message to in-memory buffer for instant client-side access
       this.conversationBuffer.push({ role, text, timestamp: Date.now() });
       
-      // Keep only last N turns (messages)
+      // Keep only last N messages (backend uses Firestore full history for AI context)
       if (this.conversationBuffer.length > this.maxBufferSize) {
         this.conversationBuffer.shift();
       }
       
-      console.log('📝 Buffer updated:', this.conversationBuffer.length, 'messages');
+      console.log('📝 Buffer:', this.conversationBuffer.length, `/${this.maxBufferSize} messages`);
     }
 
     getRecentMessages() {

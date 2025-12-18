@@ -74,8 +74,9 @@ exports.chat = functions.https.onRequest(async (req, res) => {
       fullHistory = data.messages || [];
     }
     
-    // Use recentMessages from widget if available (for faster context), else use full history
-    const history = recentMessages.length > 0 ? recentMessages : fullHistory;
+    // ALWAYS use full history from Firestore for accurate context
+    // The recentMessages from widget is just for optimization, not for AI context
+    const history = fullHistory.length > 0 ? fullHistory : recentMessages;
 
     // Construct prompt with history
     const systemPrompt = PERSONA_PROMPTS[persona] || PERSONA_PROMPTS.assistant;
