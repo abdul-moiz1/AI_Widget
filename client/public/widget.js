@@ -55,6 +55,9 @@
       this.dataArray = null;
       this.animationId = null;
       this.lastAIResponse = ''; // Store for display in voice mode
+      this.silenceTimeout = null;
+      this.lastSpeechTime = 0;
+      this.silenceDuration = 800; // 800ms of silence to stop listening
     }
 
     connectedCallback() {
@@ -169,12 +172,33 @@
         const inputEl = this.shadowRoot.getElementById('chat-input');
         if (inputEl) inputEl.value = transcript;
 
+        // Clear existing silence timeout
+        if (this.silenceTimeout) clearTimeout(this.silenceTimeout);
+        
+        if (transcript.trim()) {
+          this.lastSpeechTime = Date.now();
+        }
+
         if (event.results[event.results.length - 1].isFinal && transcript.trim()) {
           this.listeningActive = false;
           this.isListening = false;
           this.stopVisualizer();
           this.updateUIState();
           this.handleUserMessage(transcript);
+        } else if (!event.results[event.results.length - 1].isFinal) {
+          // Set timeout to stop listening after silence
+          this.silenceTimeout = setTimeout(() => {
+            if (this.listeningActive && this.isListening) {
+              console.log('🎤 Silence detected, stopping listening');
+              this.listeningActive = false;
+              this.isListening = false;
+              this.stopVisualizer();
+              this.updateUIState();
+              try {
+                this.recognition.abort();
+              } catch (e) {}
+            }
+          }, this.silenceDuration);
         }
       };
 
@@ -208,10 +232,11 @@
     toggleListening() {
       if (this.isListening) {
         console.log('🎤 Stopping listening...');
+        if (this.silenceTimeout) clearTimeout(this.silenceTimeout);
         this.listeningActive = false;
         this.isListening = false;
         try {
-          this.recognition.stop();
+          this.recognition.abort();
         } catch (err) {
           console.error('Error stopping recognition:', err);
         }
