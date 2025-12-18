@@ -1,0 +1,126 @@
+You are a senior full-stack engineer and UI/UX designer.
+
+Build a reusable, production-ready AI voice chat widget similar to ChatGPT Voice.
+
+TECH STACK (MANDATORY):
+- Frontend: Vanilla JavaScript + HTML + CSS
+- Backend: Firebase Cloud Functions (Node.js)
+- Database: Firestore
+- AI: Google Gemini API
+- Hosting: Replit (frontend) + Firebase (backend)
+
+GOAL:
+Create a reusable widget that can be embedded on any website via a single <script> tag.
+
+-----------------------------------
+FRONTEND (REPLIT)
+-----------------------------------
+
+1. Create a floating ChatGPT-style widget UI:
+   - Rounded chat bubble layout
+   - Smooth open/close animation
+   - Message bubbles (user on right, AI on left)
+   - Typing indicator animation (3 dots)
+   - Minimal, professional, dark-mode default
+   - Use Shadow DOM so styles don’t leak
+
+2. Voice Input:
+   - Use Web Speech API (SpeechRecognition)
+   - Automatically detect user language (do NOT hardcode language)
+   - Show live waveform mic animation while listening
+   - Button toggles between idle / listening / processing
+
+3. Voice Output:
+   - Use SpeechSynthesis API
+   - Auto-select best available voice based on detected language
+   - Natural pacing and clear pronunciation
+
+4. Waveform Animation:
+   - Animated bars or wave synced to mic activity
+   - Animate while listening and while AI is speaking
+
+5. Personas (Selectable):
+   - Add a dropdown in the widget UI:
+     - "ChatGPT Style Assistant"
+     - "Customer Support Agent"
+     - "Sales Assistant"
+     - "Technical Expert"
+   - Selected persona must be sent with every API request
+
+6. Session Handling:
+   - Generate a unique sessionId per browser session
+   - Persist conversation for that session
+   - Do NOT store API keys in frontend
+
+7. Network:
+   - Send messages to Firebase Cloud Function via fetch()
+   - Handle loading states and errors gracefully
+
+-----------------------------------
+BACKEND (FIREBASE CLOUD FUNCTIONS)
+-----------------------------------
+
+1. Create an HTTPS Firebase Cloud Function `/chat`:
+   - Accept JSON:
+     {
+       sessionId,
+       userMessage,
+       persona,
+       language
+     }
+
+2. Gemini Integration:
+   - Use Gemini 1.5 Flash or Pro
+   - System prompt must change dynamically based on persona
+   - Maintain conversation history using Firestore
+   - Append user + assistant messages every turn
+
+3. Firestore Schema:
+   conversations/{sessionId} {
+     persona,
+     language,
+     messages: [
+       { role: "user", text, timestamp },
+       { role: "assistant", text, timestamp }
+     ],
+     updatedAt
+   }
+
+4. Security:
+   - Gemini API key stored only in Firebase environment config
+   - Validate inputs
+   - Return only AI response text to frontend
+
+-----------------------------------
+EMBEDDING
+-----------------------------------
+
+Generate a single `widget.js` file that can be embedded like this:
+
+<script src="https://your-replit-app.replit.app/widget.js"></script>
+
+No build tools. No frameworks. Everything must work by loading this file.
+
+-----------------------------------
+QUALITY REQUIREMENTS
+-----------------------------------
+
+- Clean, readable, well-commented code
+- Production-ready UI (not demo quality)
+- Smooth animations
+- Clear separation of frontend and backend
+- No placeholder logic
+- Everything must work end-to-end
+
+-----------------------------------
+OUTPUT
+-----------------------------------
+
+1. Frontend files (HTML/CSS/JS)
+2. Firebase Cloud Function code
+3. Instructions to deploy Firebase Functions
+4. Instructions to run on Replit
+5. Example persona system prompts
+
+Do NOT explain concepts.
+Just build the system.
