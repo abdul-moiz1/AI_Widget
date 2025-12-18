@@ -133,7 +133,17 @@
       this.recognition.onerror = (event) => {
         console.error('Speech recognition error', event.error);
         this.isListening = false;
+        this.stopVisualizer();
         this.updateUIState();
+        
+        // Show user-friendly error messages
+        if (event.error === 'not-allowed') {
+          this.addMessage('assistant', '🎤 Microphone access denied. Please allow microphone access in your browser settings.');
+        } else if (event.error === 'no-speech') {
+          this.addMessage('assistant', '🎤 No speech detected. Please try again or type your message instead.');
+        } else if (event.error === 'network') {
+          this.addMessage('assistant', '🎤 Network error. Please check your connection and try again.');
+        }
       };
     }
 
@@ -146,17 +156,12 @@
           this.audioContext.resume();
         }
         
-        // In a real implementation, we would hook up the microphone stream to the analyser here
-        // For this demo/mockup, we'll simulate visualization or use the recognition activity
-        this.recognition.start();
-        
-        // Mock connecting mic to analyser for visualization
-        navigator.mediaDevices.getUserMedia({ audio: true })
-          .then(stream => {
-             const source = this.audioContext.createMediaStreamSource(stream);
-             source.connect(this.analyser);
-          })
-          .catch(err => console.error('Mic access denied for viz', err));
+        try {
+          this.recognition.start();
+        } catch (err) {
+          console.error('Failed to start speech recognition:', err);
+          this.addMessage('assistant', '🎤 Speech recognition not available. Please use text input instead.');
+        }
       }
     }
 
