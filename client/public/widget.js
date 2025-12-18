@@ -156,7 +156,6 @@
         } else {
           this.isListening = false;
           this.stopVisualizer();
-          this.updateUIState();
         }
       };
 
@@ -183,7 +182,6 @@
           this.listeningActive = false;
           this.isListening = false;
           this.stopVisualizer();
-          this.updateUIState();
           this.handleUserMessage(transcript);
         } else if (!event.results[event.results.length - 1].isFinal) {
           // Set timeout to stop listening after silence
