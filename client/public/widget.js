@@ -21,7 +21,9 @@
 
 (function() {
   const CONFIG = {
-    backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint
+    backendUrl: typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+      ? 'http://localhost:5000/api/chat'  // Local Replit backend
+      : 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint
     mockBackend: false, // Set to false when backend is ready
     theme: {
       primary: '#00e5ff',
