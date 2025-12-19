@@ -30,9 +30,16 @@ export default function Home() {
           <a href="#integration" className="hover:text-primary transition-colors">Integration</a>
           <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
         </div>
-        <Button variant="outline" className="border-primary/20 hover:bg-primary/10 hover:text-primary">
-          Get Started
-        </Button>
+        <div className="flex items-center gap-2">
+          <a href="/admin">
+            <Button variant="ghost" size="sm" className="text-xs">
+              Admin
+            </Button>
+          </a>
+          <Button variant="outline" className="border-primary/20 hover:bg-primary/10 hover:text-primary">
+            Get Started
+          </Button>
+        </div>
       </nav>
 
       <main className="relative z-10">
