@@ -330,11 +330,14 @@
         
         if (this.isVoiceMode && this.isOpen) {
           this.listeningActive = true;
-          try {
-            this.recognition.start();
-          } catch (e) {
-            console.error('Failed to restart recognition after speech:', e);
-          }
+          setTimeout(() => {
+            try {
+              console.log('🎤 Restarting listening after speech');
+              this.recognition.start();
+            } catch (e) {
+              console.error('Failed to restart recognition after speech:', e);
+            }
+          }, 100);
         }
       };
 
