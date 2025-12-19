@@ -146,6 +146,7 @@
         console.log('🎤 Speech recognition ended');
         this.isListening = false;
         this.stopVisualizer();
+        this.updateUIState();
       };
 
       this.recognition.onresult = (event) => {
