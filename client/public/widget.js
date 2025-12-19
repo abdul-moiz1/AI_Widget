@@ -57,7 +57,10 @@
       this.lastAIResponse = ''; // Store for display in voice mode
       this.silenceTimeout = null;
       this.lastSpeechTime = 0;
-      this.silenceDuration = 800; // 800ms of silence to stop listening
+      this.speechStartTime = 0;
+      this.silenceDuration = 400; // 400ms of silence to stop listening (reduced from 800ms)
+      this.minSpeechDuration = 200; // Minimum 200ms of speech to process (filter noise)
+      this.minTranscriptLength = 2; // Minimum character length to process
       
       // Business configuration
       this.businessId = window.AIVoiceWidgetConfig?.businessId;
@@ -214,6 +217,7 @@
 
       this.recognition.onstart = () => {
         console.log('🎤 Speech recognition started');
+        this.speechStartTime = Date.now();
         this.isListening = true;
         this.listeningActive = true;
         this.updateUIState();
@@ -247,14 +251,45 @@
         }
 
         if (event.results[event.results.length - 1].isFinal && transcript.trim()) {
-          this.isListening = false;
-          this.stopVisualizer();
-          this.isProcessing = true;
-          try {
-            this.recognition.stop();
-          } catch (e) {}
-          this.updateUIState();
-          this.handleUserMessage(transcript);
+          // Check minimum speech duration (filter out noise)
+          const speechDuration = Date.now() - this.speechStartTime;
+          const meetsMinimumDuration = speechDuration >= this.minSpeechDuration;
+          
+          // Check minimum transcript length (filter out stray noise)
+          const meetsMinimumLength = transcript.trim().length >= this.minTranscriptLength;
+          
+          console.log('🎤 Speech validation:', { 
+            speechDuration, 
+            meetsMinimumDuration, 
+            transcriptLength: transcript.trim().length, 
+            meetsMinimumLength 
+          });
+
+          // Only process if meets both criteria
+          if (meetsMinimumDuration && meetsMinimumLength) {
+            this.isListening = false;
+            this.stopVisualizer();
+            this.isProcessing = true;
+            try {
+              this.recognition.stop();
+            } catch (e) {}
+            this.updateUIState();
+            this.handleUserMessage(transcript);
+          } else {
+            // Noise detected, restart listening
+            console.log('🎤 Noise filtered, restarting listening...');
+            if (inputEl) inputEl.value = '';
+            try {
+              this.recognition.stop();
+            } catch (e) {}
+            setTimeout(() => {
+              if (this.listeningActive) {
+                try {
+                  this.recognition.start();
+                } catch (e) {}
+              }
+            }, 100);
+          }
         }
       };
 
