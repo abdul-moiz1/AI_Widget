@@ -14,14 +14,21 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground overflow-hidden selection:bg-primary selection:text-primary-foreground">
       {/* Abstract Background Elements */}
       <div className="fixed inset-0 z-0 pointer-events-none">
+        {/* Subtle background image with strong overlay */}
         <div 
-            className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-screen"
+            className="absolute inset-0 bg-cover bg-center opacity-15"
             style={{ backgroundImage: `url(${abstractBg})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 to-background/80" />
         
-        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] mix-blend-screen animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[100px] mix-blend-screen" style={{ animationDelay: '2s' }} />
+        {/* Strong gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/70 to-background/90" />
+        
+        {/* Dark wash over hero section for better text contrast */}
+        <div className="absolute top-0 left-0 right-0 h-[80vh] bg-gradient-to-b from-black/20 to-transparent" />
+        
+        {/* Elegant animated gradient orbs */}
+        <div className="absolute top-[-15%] right-[-5%] w-[600px] h-[600px] bg-primary/8 rounded-full blur-[100px] mix-blend-screen animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-10%] left-[-8%] w-[500px] h-[500px] bg-blue-600/8 rounded-full blur-[90px] mix-blend-screen" style={{ animationDelay: '2s' }} />
       </div>
 
       <nav className="relative z-10 container mx-auto px-6 py-6 flex items-center justify-between">
