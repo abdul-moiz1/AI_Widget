@@ -1,15 +1,23 @@
 // Firebase Configuration
-// Replace these values with your Firebase project configuration
-// Get these from: Firebase Console > Project Settings > General > Your apps > Web app
+// Loaded dynamically from the server API endpoint
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+let firebaseConfig = null;
 
-// Export for use in app.js
-window.firebaseConfig = firebaseConfig;
+// Fetch Firebase config from server
+async function loadFirebaseConfig() {
+  try {
+    const response = await fetch('/api/firebase-config');
+    if (!response.ok) {
+      throw new Error('Failed to load Firebase config');
+    }
+    firebaseConfig = await response.json();
+    window.firebaseConfig = firebaseConfig;
+    return true;
+  } catch (error) {
+    console.error('Failed to load Firebase config:', error);
+    return false;
+  }
+}
+
+// Initialize config when module loads
+loadFirebaseConfig();
