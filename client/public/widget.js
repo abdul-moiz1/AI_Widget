@@ -529,27 +529,40 @@
     updateVoiceModeUI() {
       const micBtn = this.shadowRoot.getElementById('voice-mic-btn');
       const statusText = this.shadowRoot.getElementById('voice-status');
-      const responseText = this.shadowRoot.getElementById('ai-response-text');
       
       if (!micBtn || !statusText) return;
 
       if (this.isListening) {
         micBtn.classList.add('listening');
         statusText.textContent = 'Listening...';
-        if (responseText) responseText.textContent = '';
       } else if (this.isProcessing) {
         micBtn.classList.remove('listening');
         statusText.textContent = 'Thinking...';
-        if (responseText) responseText.textContent = '';
       } else if (this.isSpeaking) {
         micBtn.classList.remove('listening');
         statusText.textContent = 'Speaking...';
-        if (responseText && this.lastAIResponse) responseText.textContent = this.lastAIResponse;
       } else {
         micBtn.classList.remove('listening');
         statusText.textContent = 'Tap to speak';
-        if (responseText) responseText.textContent = '';
       }
+      
+      this.renderVoiceMessages();
+    }
+    
+    renderVoiceMessages() {
+      const container = this.shadowRoot.getElementById('voice-messages-container');
+      if (!container) return;
+
+      container.innerHTML = '';
+      
+      this.messages.forEach(msg => {
+        const div = document.createElement('div');
+        div.className = `message ${msg.role}`;
+        div.textContent = msg.text;
+        container.appendChild(div);
+      });
+
+      container.scrollTop = container.scrollHeight;
     }
 
     updateTextModeUI() {
@@ -572,17 +585,21 @@
             </button>
           </div>
 
-          <div class="voice-content">
-            <div class="voice-response" id="ai-response-text"></div>
-            
-            <div class="mic-container">
-              <canvas id="waveform" width="150" height="150" class="waveform-circle"></canvas>
-              <button class="voice-mic-btn" id="voice-mic-btn">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-              </button>
+          <div class="voice-layout">
+            <div class="voice-sidebar">
+              <div class="messages-area" id="voice-messages-container"></div>
             </div>
 
-            <div class="voice-status" id="voice-status">Tap to speak</div>
+            <div class="voice-content">
+              <div class="mic-container">
+                <canvas id="waveform" width="150" height="150" class="waveform-circle"></canvas>
+                <button class="voice-mic-btn" id="voice-mic-btn">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+              </div>
+
+              <div class="voice-status" id="voice-status">Tap to speak</div>
+            </div>
           </div>
         </div>
       `;
@@ -754,6 +771,27 @@
           box-shadow: 0 0 12px rgba(0,229,255,0.2);
         }
 
+        .voice-layout {
+          flex: 1;
+          display: flex;
+          gap: 0;
+          overflow: hidden;
+        }
+
+        .voice-sidebar {
+          width: 40%;
+          border-right: 1px solid rgba(0,229,255,0.1);
+          background: rgba(10,22,40,0.5);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .voice-sidebar .messages-area {
+          flex: 1;
+          padding: 12px;
+          gap: 8px;
+        }
+
         .voice-content {
           flex: 1;
           display: flex;
@@ -762,20 +800,6 @@
           justify-content: center;
           gap: 32px;
           padding: 40px 24px;
-        }
-
-        .voice-response {
-          min-height: 60px;
-          max-width: 85%;
-          padding: 16px;
-          background: linear-gradient(135deg, rgba(0,100,150,0.2), rgba(0,150,200,0.15));
-          border: 1px solid rgba(0,229,255,0.15);
-          border-radius: 16px;
-          color: rgba(255,255,255,0.85);
-          font-size: 15px;
-          line-height: 1.6;
-          text-align: center;
-          animation: fadeIn 0.4s ease-in;
         }
 
         @keyframes fadeIn {
