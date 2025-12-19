@@ -17,6 +17,36 @@ export async function registerRoutes(
     });
   });
 
+  // Widget message endpoint - proxy to Cloud Function with businessId
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { businessId, message, sessionId, recentMessages } = req.body;
+
+      if (!businessId) {
+        return res.status(400).json({ error: "businessId is required" });
+      }
+
+      const cloudFunctionUrl = 'https://chat-cgdxljuoea-uc.a.run.app';
+      
+      const response = await fetch(cloudFunctionUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId,
+          message,
+          sessionId,
+          recentMessages
+        })
+      });
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error('Chat error:', error);
+      res.status(500).json({ error: 'Failed to process message' });
+    }
+  });
+
   // Backend storage removed - widget uses Firebase directly
   // See firebase-functions-reference.js for Cloud Function implementation
   

@@ -469,14 +469,23 @@
             recentMessages: recentMessages
           };
           
+          // Add businessId if widget is configured for a business
+          if (this.businessId) {
+            payload.businessId = this.businessId;
+          }
+          
+          const endpoint = this.businessId ? '/api/chat' : CONFIG.backendUrl;
+          
           console.log('🚀 Sending to backend:', { 
             sessionId: this.sessionId, 
             message: text,
+            businessId: this.businessId,
+            endpoint: endpoint,
             bufferSize: recentMessages.length,
             recentMessages: recentMessages
           });
           
-          const res = await fetch(CONFIG.backendUrl, {
+          const res = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
