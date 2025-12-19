@@ -27,8 +27,8 @@ export default function Home() {
         <div className="absolute top-0 left-0 right-0 h-[80vh] bg-gradient-to-b from-black/20 to-transparent" />
         
         {/* Elegant animated gradient orbs */}
-        <div className="absolute top-[-15%] right-[-5%] w-[600px] h-[600px] bg-primary/8 rounded-full blur-[100px] mix-blend-screen animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-10%] left-[-8%] w-[500px] h-[500px] bg-blue-600/8 rounded-full blur-[90px] mix-blend-screen" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[-15%] right-[-5%] w-[600px] h-[600px] bg-primary/8 rounded-full blur-[80px] mix-blend-screen animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-10%] left-[-8%] w-[500px] h-[500px] bg-blue-600/8 rounded-full blur-[70px] mix-blend-screen" style={{ animationDelay: '2s' }} />
       </div>
 
       <nav className="relative z-10 container mx-auto px-6 py-6 flex items-center justify-between">
@@ -103,16 +103,10 @@ export default function Home() {
 
         {/* Features Section */}
         <section id="features" className="container mx-auto px-6 py-24 border-t border-white/5">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-16"
-          >
+          <div className="text-center mb-16">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Everything you need to add voice to your application</p>
-          </motion.div>
+          </div>
           <div className="grid md:grid-cols-2 gap-8">
             <FeatureCard 
               icon={<MessageSquare className="w-6 h-6" />}
@@ -143,12 +137,7 @@ export default function Home() {
 
         {/* Integration Section */}
         <section id="integration" className="container mx-auto px-6 py-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
+          <div>
             <div className="bg-gradient-to-br from-secondary/40 to-blue-600/10 border border-white/10 rounded-3xl p-8 md:p-16 overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
               
@@ -195,21 +184,15 @@ export default function Home() {
                 </motion.div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </section>
 
         {/* Pricing Section */}
         <section id="pricing" className="container mx-auto px-6 py-24 border-t border-white/5">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-16"
-          >
+          <div className="text-center mb-16">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Simple Pricing</h2>
             <p className="text-muted-foreground text-lg">Pay for what you use, no surprises</p>
-          </motion.div>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
@@ -251,13 +234,7 @@ export default function Home() {
 
         {/* CTA Section */}
         <section className="container mx-auto px-6 py-24 border-t border-white/5">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="bg-gradient-to-r from-primary/20 via-blue-500/20 to-primary/20 border border-primary/30 rounded-3xl p-12 md:p-16 text-center"
-          >
+          <div className="bg-gradient-to-r from-primary/20 via-blue-500/20 to-primary/20 border border-primary/30 rounded-3xl p-12 md:p-16 text-center">
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Ready to add voice to your app?</h2>
             <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">Join companies using VocalAI to enhance user engagement with conversational voice AI.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -268,7 +245,7 @@ export default function Home() {
                 Schedule Demo
               </Button>
             </div>
-          </motion.div>
+          </div>
         </section>
       </main>
 
@@ -283,10 +260,6 @@ export default function Home() {
 function FeatureCard({ icon, title, description, delay }: { icon: React.ReactNode, title: string, description: string, delay: number }) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
       whileHover={{ y: -8 }}
       className="group p-8 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 hover:border-primary/50 transition-all overflow-hidden relative"
     >
