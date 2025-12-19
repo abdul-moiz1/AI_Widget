@@ -169,10 +169,12 @@
         }
 
         if (event.results[event.results.length - 1].isFinal && transcript.trim()) {
-          this.listeningActive = false;
           this.isListening = false;
           this.stopVisualizer();
           this.isProcessing = true;
+          try {
+            this.recognition.stop();
+          } catch (e) {}
           this.updateUIState();
           this.handleUserMessage(transcript);
         }
@@ -323,9 +325,10 @@
       utterance.onend = () => {
         this.isSpeaking = false;
         this.stopVisualizer();
+        this.isProcessing = false;
         this.updateUIState();
         
-        if (!this.isProcessing) {
+        if (this.isVoiceMode && this.isOpen) {
           this.listeningActive = true;
           try {
             this.recognition.start();
