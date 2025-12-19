@@ -144,19 +144,8 @@
 
       this.recognition.onend = () => {
         console.log('🎤 Speech recognition ended');
-        if (this.listeningActive) {
-          console.log('🎤 Restarting recognition...');
-          setTimeout(() => {
-            try {
-              this.recognition.start();
-            } catch (e) {
-              console.error('Failed to restart:', e);
-            }
-          }, 100);
-        } else {
-          this.isListening = false;
-          this.stopVisualizer();
-        }
+        this.isListening = false;
+        this.stopVisualizer();
       };
 
       this.recognition.onresult = (event) => {
