@@ -147,7 +147,9 @@ async function loadBusinesses() {
     console.error('Error loading businesses:', error);
     container.innerHTML = `
       <div class="empty-state">
-        <p>Error loading businesses. Please check your Firebase configuration.</p>
+        <p>⚠️ Unable to access Firestore database.</p>
+        <p style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">This typically means your Firestore security rules deny access. Check your Firebase Console Firestore security rules and allow read/write access.</p>
+        <p style="font-size: 0.85em; margin-top: 10px; color: #999;">Error: ${error.message || 'Unknown error'}</p>
       </div>
     `;
   }
@@ -498,6 +500,13 @@ window.copyScript = copyScript;
 
 // Initialize
 window.addEventListener('hashchange', handleRoute);
-document.addEventListener('DOMContentLoaded', () => {
-  handleRoute();
+document.addEventListener('DOMContentLoaded', async () => {
+  // Wait for Firebase config to be loaded
+  try {
+    await window.firebaseConfigReady;
+    handleRoute();
+  } catch (error) {
+    console.error('Failed to initialize Firebase:', error);
+    showToast('Firebase configuration failed', 'error');
+  }
 });

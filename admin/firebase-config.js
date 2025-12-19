@@ -3,8 +3,8 @@
 
 let firebaseConfig = null;
 
-// Fetch Firebase config from server
-async function loadFirebaseConfig() {
+// Create a promise that resolves when config is loaded
+const firebaseConfigReady = (async () => {
   try {
     const response = await fetch('/api/firebase-config');
     if (!response.ok) {
@@ -12,12 +12,14 @@ async function loadFirebaseConfig() {
     }
     firebaseConfig = await response.json();
     window.firebaseConfig = firebaseConfig;
+    window.firebaseConfigReady = Promise.resolve();
     return true;
   } catch (error) {
     console.error('Failed to load Firebase config:', error);
+    window.firebaseConfigReady = Promise.reject(error);
     return false;
   }
-}
+})();
 
-// Initialize config when module loads
-loadFirebaseConfig();
+// Make the promise globally available
+window.firebaseConfigReady = firebaseConfigReady;
