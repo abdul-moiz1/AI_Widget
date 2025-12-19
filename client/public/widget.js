@@ -58,13 +58,91 @@
       this.silenceTimeout = null;
       this.lastSpeechTime = 0;
       this.silenceDuration = 800; // 800ms of silence to stop listening
+      
+      // Business configuration
+      this.businessId = window.AIVoiceWidgetConfig?.businessId;
+      this.businessConfig = null;
+      this.businessName = 'AI Chat';
+      this.logoUrl = null;
+      this.voiceSettings = {
+        language: 'en',
+        voiceGender: 'neutral',
+        speakingSpeed: 1,
+        pitch: 1
+      };
     }
 
-    connectedCallback() {
+    async connectedCallback() {
+      if (this.businessId) {
+        await this.loadBusinessConfig();
+      }
       this.render();
       this.setupAudio();
       this.setupSpeechRecognition();
       this.loadVoices();
+    }
+
+    async loadBusinessConfig() {
+      try {
+        // Import Firebase and load config
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.textContent = `
+          import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+          import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+          
+          window.loadFirebaseConfig = async (projectId, apiKey, authDomain, storageBucket, messagingSenderId, appId, businessId) => {
+            try {
+              const app = initializeApp({
+                apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId
+              });
+              const db = getFirestore(app);
+              const businessDoc = await getDoc(doc(db, 'businesses', businessId));
+              return businessDoc.exists() ? { id: businessDoc.id, ...businessDoc.data() } : null;
+            } catch (err) {
+              console.error('Error loading business config:', err);
+              return null;
+            }
+          };
+        `;
+        document.head.appendChild(script);
+
+        // Fetch Firebase config from server
+        const response = await fetch('/api/firebase-config');
+        if (!response.ok) throw new Error('Failed to fetch Firebase config');
+        const firebaseConfig = await response.json();
+
+        // Wait for Firebase to be loaded, then get business config
+        let maxRetries = 20;
+        while (!window.loadFirebaseConfig && maxRetries-- > 0) {
+          await new Promise(r => setTimeout(r, 50));
+        }
+
+        if (window.loadFirebaseConfig) {
+          const config = await window.loadFirebaseConfig(
+            firebaseConfig.projectId, firebaseConfig.apiKey, firebaseConfig.authDomain,
+            firebaseConfig.storageBucket, firebaseConfig.messagingSenderId,
+            firebaseConfig.appId, this.businessId
+          );
+          
+          if (config) {
+            this.businessConfig = config;
+            this.businessName = config.businessName || 'AI Chat';
+            this.logoUrl = config.widget?.logoUrl;
+            if (config.voice) {
+              this.voiceSettings = { ...this.voiceSettings, ...config.voice };
+            }
+            if (config.widget?.theme?.primaryColor) {
+              CONFIG.theme.primary = config.widget.theme.primaryColor;
+            }
+            console.log('✅ Business config loaded:', config);
+          } else {
+            console.error('Business not found');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading business config:', error);
+      }
     }
 
     getSessionId() {
@@ -309,6 +387,10 @@
       const lang = this.recognition ? this.recognition.lang : 'en-US';
       const voice = this.voices.find(v => v.lang.startsWith(lang.split('-')[0])) || this.voices[0];
       if (voice) utterance.voice = voice;
+      
+      // Apply voice settings from business config
+      utterance.rate = this.voiceSettings.speakingSpeed || 1;
+      utterance.pitch = this.voiceSettings.pitch || 1;
 
       utterance.onstart = () => {
         this.listeningActive = false;
@@ -571,6 +653,7 @@
       return `
         <div class="voice-mode">
           <div class="voice-header">
+            ${this.logoUrl ? `<img src="${this.logoUrl}" alt="logo" class="voice-logo" />` : ''}
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Messages">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </button>
@@ -594,7 +677,8 @@
       return `
         <div class="text-mode">
           <div class="text-header">
-            <span class="text-title">AI Chat</span>
+            ${this.logoUrl ? `<img src="${this.logoUrl}" alt="logo" class="text-logo" />` : ''}
+            <span class="text-title">${this.businessName}</span>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Voice Mode">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path></svg>
             </button>
@@ -851,6 +935,21 @@
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 12px;
+        }
+
+        .text-logo {
+          width: 32px;
+          height: 32px;
+          border-radius: 4px;
+          object-fit: contain;
+        }
+
+        .voice-logo {
+          width: 40px;
+          height: 40px;
+          border-radius: 4px;
+          object-fit: contain;
         }
 
         .text-title {
@@ -861,6 +960,7 @@
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
+          flex: 1;
         }
 
         .messages-area {
