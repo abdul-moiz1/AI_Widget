@@ -186,26 +186,27 @@ async function loadBusinessForEdit(id) {
 function renderForm(containerId, business) {
   const container = document.getElementById(containerId);
   const isEdit = !!business;
+  const formId = isEdit ? 'edit-form' : 'add-form';
   
   const ctx = business?.context || {};
   const widget = business?.widget || {};
   const theme = widget.theme || {};
   
   container.innerHTML = `
-    <form id="business-form" class="form-container" onsubmit="handleSubmit(event, ${isEdit})">
+    <form id="${formId}" class="form-container" data-form-type="${isEdit ? 'edit' : 'add'}">
       <div class="form-section">
         <h3 class="form-section-title">Business Info</h3>
         <div class="form-row">
           <div class="form-group">
-            <label for="businessName">Business Name</label>
-            <input type="text" id="businessName" name="businessName" required 
+            <label>Business Name</label>
+            <input type="text" name="businessName" required 
                    value="${escapeHtml(business?.businessName || '')}"
                    placeholder="e.g., ABC Restaurant"
                    data-testid="input-business-name">
           </div>
           <div class="form-group">
-            <label for="status">Status</label>
-            <select id="status" name="status" data-testid="select-status">
+            <label>Status</label>
+            <select name="status" data-testid="select-status">
               <option value="active" ${(business?.status || 'active') === 'active' ? 'selected' : ''}>Active</option>
               <option value="inactive" ${business?.status === 'inactive' ? 'selected' : ''}>Inactive</option>
             </select>
@@ -216,29 +217,29 @@ function renderForm(containerId, business) {
       <div class="form-section">
         <h3 class="form-section-title">Business Context</h3>
         <div class="form-group">
-          <label for="description">Description</label>
-          <textarea id="description" name="description" 
+          <label>Description</label>
+          <textarea name="description" 
                     placeholder="Describe the business for the AI assistant..."
                     data-testid="input-description">${escapeHtml(ctx.description || '')}</textarea>
         </div>
         <div class="form-group">
-          <label for="services">Services</label>
-          <input type="text" id="services" name="services" 
+          <label>Services</label>
+          <input type="text" name="services" 
                  value="${escapeHtml((ctx.services || []).join(', '))}"
                  placeholder="e.g., Dine-in, Takeaway, Delivery"
                  data-testid="input-services">
           <div class="form-help">Comma-separated list of services</div>
         </div>
         <div class="form-group">
-          <label for="hours">Business Hours</label>
-          <input type="text" id="hours" name="hours" 
+          <label>Business Hours</label>
+          <input type="text" name="hours" 
                  value="${escapeHtml(ctx.hours || '')}"
                  placeholder="e.g., Daily 11 AM to 11 PM"
                  data-testid="input-hours">
         </div>
         <div class="form-group">
-          <label for="rules">AI Rules</label>
-          <textarea id="rules" name="rules" 
+          <label>AI Rules</label>
+          <textarea name="rules" 
                     placeholder="One rule per line. These guide the AI's behavior."
                     data-testid="input-rules">${escapeHtml((ctx.rules || []).join('\n'))}</textarea>
           <div class="form-help">One rule per line (e.g., "Always greet warmly")</div>
@@ -248,28 +249,27 @@ function renderForm(containerId, business) {
       <div class="form-section">
         <h3 class="form-section-title">Widget Settings</h3>
         <div class="form-group">
-          <label for="logoUrl">Logo URL</label>
-          <input type="url" id="logoUrl" name="logoUrl" 
+          <label>Logo URL</label>
+          <input type="url" name="logoUrl" 
                  value="${escapeHtml(widget.logoUrl || '')}"
                  placeholder="https://example.com/logo.png"
                  data-testid="input-logo-url">
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="primaryColor">Primary Color</label>
+            <label>Primary Color</label>
             <div class="color-preview">
-              <input type="color" id="primaryColor" name="primaryColor" 
+              <input type="color" name="primaryColor" 
                      value="${theme.primaryColor || '#0ea5e9'}"
                      data-testid="input-primary-color">
-              <span id="colorValue">${theme.primaryColor || '#0ea5e9'}</span>
+              <span class="color-value">${theme.primaryColor || '#0ea5e9'}</span>
             </div>
           </div>
           <div class="form-group">
             <label>Theme Mode</label>
             <div class="toggle-container">
               <span>Light</span>
-              <div class="toggle ${(theme.mode || 'dark') === 'dark' ? 'active' : ''}" 
-                   id="themeToggle" onclick="toggleTheme()"
+              <div class="toggle theme-toggle ${(theme.mode || 'dark') === 'dark' ? 'active' : ''}" 
                    data-testid="toggle-theme">
                 <div class="toggle-knob"></div>
               </div>
@@ -292,12 +292,23 @@ function renderForm(containerId, business) {
     ${isEdit ? renderScriptGenerator(business.id) : ''}
   `;
   
-  // Color picker sync
-  const colorInput = document.getElementById('primaryColor');
-  const colorValue = document.getElementById('colorValue');
+  const form = document.getElementById(formId);
+  
+  // Color picker sync within form context
+  const colorInput = form.querySelector('input[name="primaryColor"]');
+  const colorValue = form.querySelector('.color-value');
   colorInput.addEventListener('input', (e) => {
     colorValue.textContent = e.target.value;
   });
+  
+  // Theme toggle within form context
+  const themeToggle = form.querySelector('.theme-toggle');
+  themeToggle.addEventListener('click', () => {
+    themeToggle.classList.toggle('active');
+  });
+  
+  // Form submit handler within form context
+  form.addEventListener('submit', (e) => handleSubmit(e, isEdit));
 }
 
 // Render script generator
@@ -323,11 +334,6 @@ function renderScriptGenerator(businessId) {
   `;
 }
 
-// Toggle theme mode
-function toggleTheme() {
-  const toggle = document.getElementById('themeToggle');
-  toggle.classList.toggle('active');
-}
 
 // Copy script to clipboard
 async function copyScript(businessId) {
@@ -357,7 +363,9 @@ async function handleSubmit(event, isEdit) {
   const formData = new FormData(form);
   
   const businessId = isEdit ? currentBusinessId : generateId();
-  const themeToggle = document.getElementById('themeToggle');
+  
+  // Get theme toggle from within the submitted form
+  const themeToggle = form.querySelector('.theme-toggle');
   
   const data = {
     businessName: formData.get('businessName'),
@@ -417,9 +425,7 @@ function escapeHtml(text) {
 
 // Expose functions globally
 window.navigateTo = navigateTo;
-window.handleSubmit = handleSubmit;
 window.deleteBusiness = deleteBusiness;
-window.toggleTheme = toggleTheme;
 window.copyScript = copyScript;
 
 // Initialize
