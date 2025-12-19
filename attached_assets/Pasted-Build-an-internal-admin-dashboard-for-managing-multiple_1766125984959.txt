@@ -1,0 +1,146 @@
+Build an internal admin dashboard for managing multiple businesses that use an embeddable AI voice widget.
+
+Important
+
+This dashboard is for internal use only
+
+Businesses do NOT log in
+
+Businesses only receive a widget <script>
+
+The dashboard controls all configuration
+
+Tech stack
+
+Frontend only
+
+HTML, CSS, vanilla JavaScript
+
+Firebase Firestore as the database
+
+Firebase Web SDK (Firestore only)
+
+No backend logic in Replit
+
+Firestore structure (must follow exactly)
+businesses/{businessId}
+
+
+Example document:
+
+{
+  "businessName": "ABC Restaurant",
+  "status": "active",
+  "context": {
+    "description": "ABC Restaurant is a casual family restaurant serving Pakistani and Indian food.",
+    "services": ["Dine-in", "Takeaway", "Delivery"],
+    "hours": "Daily 11 AM to 11 PM",
+    "rules": [
+      "Always greet warmly",
+      "Ask dine-in or takeaway",
+      "Do not guess prices"
+    ]
+  },
+  "widget": {
+    "logoUrl": "https://...",
+    "theme": {
+      "primaryColor": "#0ea5e9",
+      "mode": "dark"
+    }
+  },
+  "createdAt": timestamp,
+  "updatedAt": timestamp
+}
+
+Dashboard features
+1. Business List Page
+
+List all businesses from Firestore
+
+Show:
+
+Business name
+
+businessId
+
+status (active / inactive)
+
+Button to:
+
+Create new business
+
+Edit existing business
+
+2. Business Editor Page
+
+Allow editing of the following sections:
+
+Business Info
+
+Business name
+
+Status (active / inactive)
+
+Business Context
+
+Description (textarea)
+
+Services (comma-separated input)
+
+Hours (text input)
+
+Rules (one rule per line)
+
+Widget Settings
+
+Logo URL input
+
+Primary color picker
+
+Dark / light mode toggle
+
+Save changes directly to Firestore.
+
+3. Widget Script Generator
+
+For each business, show a copyable widget script:
+
+<script>
+  window.AIVoiceWidgetConfig = {
+    businessId: "<businessId>"
+  };
+</script>
+<script src="https://YOUR_WIDGET_HOST/widget.js"></script>
+
+
+Include a “Copy to clipboard” button.
+
+UX / Design
+
+Clean, professional admin-style UI
+
+Sidebar navigation:
+
+Businesses
+
+Add Business
+
+Forms should be simple and readable
+
+No animations required
+
+Constraints
+
+No authentication logic required (assume trusted internal use)
+
+No analytics
+
+No billing
+
+No role management
+
+No external UI libraries
+
+Goal
+
+Create a simple internal dashboard that allows centralized management of business context and widget appearance, where all logic is enforced server-side by Firebase Functions and Gemini.
