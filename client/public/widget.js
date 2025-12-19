@@ -143,21 +143,10 @@
       };
 
       this.recognition.onend = () => {
-        console.log('🎤 Speech recognition ended', { listeningActive: this.listeningActive });
+        console.log('🎤 Speech recognition ended', { isProcessing: this.isProcessing });
         this.isListening = false;
         this.stopVisualizer();
         this.updateUIState();
-        
-        if (this.listeningActive && this.isVoiceMode && this.isOpen) {
-          setTimeout(() => {
-            try {
-              console.log('🎤 Auto-restarting recognition from onend');
-              this.recognition.start();
-            } catch (e) {
-              console.error('Failed to restart from onend:', e);
-            }
-          }, 50);
-        }
       };
 
       this.recognition.onresult = (event) => {
@@ -181,11 +170,10 @@
 
         if (event.results[event.results.length - 1].isFinal && transcript.trim()) {
           this.isListening = false;
-          this.listeningActive = false;
           this.stopVisualizer();
           this.isProcessing = true;
           try {
-            this.recognition.abort();
+            this.recognition.stop();
           } catch (e) {}
           this.updateUIState();
           this.handleUserMessage(transcript);
@@ -338,22 +326,18 @@
         this.isSpeaking = false;
         this.stopVisualizer();
         this.isProcessing = false;
+        this.updateUIState();
         
         if (this.isVoiceMode && this.isOpen) {
           this.listeningActive = true;
-          this.updateUIState();
           setTimeout(() => {
             try {
               console.log('🎤 Restarting listening after speech');
               this.recognition.start();
             } catch (e) {
-              console.error('Failed to restart recognition after speech:', e);
-              this.listeningActive = false;
-              this.updateUIState();
+              console.error('Failed to restart recognition:', e);
             }
-          }, 100);
-        } else {
-          this.updateUIState();
+          }, 50);
         }
       };
 
