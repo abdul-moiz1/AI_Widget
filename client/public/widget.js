@@ -442,6 +442,14 @@
     async handleUserMessage(text) {
       if (!text.trim()) return;
 
+      // Defensive check: ensure businessId is configured
+      if (!this.businessId) {
+        const errorMsg = 'This widget is not configured correctly. Please contact the site owner.';
+        this.addMessage('assistant', errorMsg);
+        this.speak(errorMsg);
+        return;
+      }
+
       this.addMessage('user', text);
       this.addToBuffer('user', text);
       
@@ -463,29 +471,24 @@
         } else {
           const recentMessages = this.getRecentMessages();
           
+          // Always include businessId in payload
           const payload = {
             sessionId: this.sessionId,
             message: text,
-            recentMessages: recentMessages
+            recentMessages: recentMessages,
+            businessId: this.businessId
           };
-          
-          // Add businessId if widget is configured for a business
-          if (this.businessId) {
-            payload.businessId = this.businessId;
-          }
-          
-          const endpoint = this.businessId ? '/api/chat' : CONFIG.backendUrl;
           
           console.log('🚀 Sending to backend:', { 
             sessionId: this.sessionId, 
             message: text,
             businessId: this.businessId,
-            endpoint: endpoint,
+            backendUrl: CONFIG.backendUrl,
             bufferSize: recentMessages.length,
             recentMessages: recentMessages
           });
           
-          const res = await fetch(endpoint, {
+          const res = await fetch(CONFIG.backendUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -499,8 +502,14 @@
             throw new Error(`Backend error: ${res.status} ${res.statusText} - ${errorText}`);
           }
           
-          const data = await res.json();
-          console.log('Backend response data:', data);
+          let data;
+          try {
+            data = await res.json();
+            console.log('Backend response data:', data);
+          } catch (jsonErr) {
+            console.error('Failed to parse JSON response:', jsonErr);
+            throw new Error('Invalid response format from backend. Expected JSON.');
+          }
           
           responseText = data.reply || data.text || data.response || '';
           if (!responseText) {
@@ -517,7 +526,7 @@
       } catch (err) {
         console.error('API Error:', err);
         const errorMsg = err.message || String(err);
-        this.addMessage('assistant', `❌ Error: ${errorMsg}`);
+        this.addMessage('assistant', `Error: ${errorMsg}`);
         this.speak("I'm having trouble connecting right now. Please try again.");
       } finally {
         this.isProcessing = false;
