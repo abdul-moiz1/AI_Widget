@@ -172,6 +172,8 @@
           this.listeningActive = false;
           this.isListening = false;
           this.stopVisualizer();
+          this.isProcessing = true;
+          this.updateUIState();
           this.handleUserMessage(transcript);
         }
       };
@@ -498,6 +500,7 @@
     toggleMode() {
       this.isVoiceMode = !this.isVoiceMode;
       this.stopListeningIfActive();
+      this.messages = [];
       this.render();
       
       if (this.isOpen) {
