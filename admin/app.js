@@ -191,6 +191,7 @@ function renderForm(containerId, business) {
   const ctx = business?.context || {};
   const widget = business?.widget || {};
   const theme = widget.theme || {};
+  const voice = business?.voice || {};
   
   container.innerHTML = `
     <form id="${formId}" class="form-container" data-form-type="${isEdit ? 'edit' : 'add'}">
@@ -279,6 +280,49 @@ function renderForm(containerId, business) {
         </div>
       </div>
       
+      <div class="form-section">
+        <h3 class="form-section-title">Voice Settings</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Language</label>
+            <select name="language" data-testid="select-language">
+              <option value="en" ${voice.language === 'en' ? 'selected' : ''}>English</option>
+              <option value="es" ${voice.language === 'es' ? 'selected' : ''}>Spanish</option>
+              <option value="fr" ${voice.language === 'fr' ? 'selected' : ''}>French</option>
+              <option value="de" ${voice.language === 'de' ? 'selected' : ''}>German</option>
+              <option value="it" ${voice.language === 'it' ? 'selected' : ''}>Italian</option>
+              <option value="pt" ${voice.language === 'pt' ? 'selected' : ''}>Portuguese</option>
+              <option value="ja" ${voice.language === 'ja' ? 'selected' : ''}>Japanese</option>
+              <option value="zh" ${voice.language === 'zh' ? 'selected' : ''}>Mandarin Chinese</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Voice Gender</label>
+            <select name="voiceGender" data-testid="select-voice-gender">
+              <option value="neutral" ${voice.voiceGender === 'neutral' ? 'selected' : ''}>Neutral</option>
+              <option value="male" ${voice.voiceGender === 'male' ? 'selected' : ''}>Male</option>
+              <option value="female" ${voice.voiceGender === 'female' ? 'selected' : ''}>Female</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Speaking Speed: <span class="slider-value" id="speedValue">${voice.speakingSpeed || 1}</span></label>
+          <input type="range" name="speakingSpeed" min="0.5" max="2" step="0.1" 
+                 value="${voice.speakingSpeed || 1}"
+                 class="voice-slider"
+                 data-testid="slider-speaking-speed">
+          <div class="form-help">0.5x (Slow) to 2x (Fast)</div>
+        </div>
+        <div class="form-group">
+          <label>Pitch: <span class="slider-value" id="pitchValue">${voice.pitch || 1}</span></label>
+          <input type="range" name="pitch" min="0.5" max="2" step="0.1" 
+                 value="${voice.pitch || 1}"
+                 class="voice-slider"
+                 data-testid="slider-pitch">
+          <div class="form-help">0.5 (Lower) to 2 (Higher)</div>
+        </div>
+      </div>
+      
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" data-testid="button-save">
           ${isEdit ? 'Save Changes' : 'Create Business'}
@@ -306,6 +350,24 @@ function renderForm(containerId, business) {
   themeToggle.addEventListener('click', () => {
     themeToggle.classList.toggle('active');
   });
+  
+  // Voice slider listeners
+  const speedSlider = form.querySelector('input[name="speakingSpeed"]');
+  const pitchSlider = form.querySelector('input[name="pitch"]');
+  const speedValue = form.querySelector('#speedValue');
+  const pitchValue = form.querySelector('#pitchValue');
+  
+  if (speedSlider) {
+    speedSlider.addEventListener('input', (e) => {
+      speedValue.textContent = parseFloat(e.target.value).toFixed(1);
+    });
+  }
+  
+  if (pitchSlider) {
+    pitchSlider.addEventListener('input', (e) => {
+      pitchValue.textContent = parseFloat(e.target.value).toFixed(1);
+    });
+  }
   
   // Form submit handler within form context
   form.addEventListener('submit', (e) => handleSubmit(e, isEdit));
@@ -382,6 +444,12 @@ async function handleSubmit(event, isEdit) {
         primaryColor: formData.get('primaryColor'),
         mode: themeToggle.classList.contains('active') ? 'dark' : 'light'
       }
+    },
+    voice: {
+      language: formData.get('language'),
+      voiceGender: formData.get('voiceGender'),
+      speakingSpeed: parseFloat(formData.get('speakingSpeed')),
+      pitch: parseFloat(formData.get('pitch'))
     },
     updatedAt: serverTimestamp()
   };
