@@ -545,24 +545,6 @@
         micBtn.classList.remove('listening');
         statusText.textContent = 'Tap to speak';
       }
-      
-      this.renderVoiceMessages();
-    }
-    
-    renderVoiceMessages() {
-      const container = this.shadowRoot.getElementById('voice-messages-container');
-      if (!container) return;
-
-      container.innerHTML = '';
-      
-      this.messages.forEach(msg => {
-        const div = document.createElement('div');
-        div.className = `message ${msg.role}`;
-        div.textContent = msg.text;
-        container.appendChild(div);
-      });
-
-      container.scrollTop = container.scrollHeight;
     }
 
     updateTextModeUI() {
@@ -580,26 +562,20 @@
       return `
         <div class="voice-mode">
           <div class="voice-header">
-            <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Text Mode">
+            <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Messages">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </button>
           </div>
 
-          <div class="voice-layout">
-            <div class="voice-sidebar">
-              <div class="messages-area" id="voice-messages-container"></div>
+          <div class="voice-content">
+            <div class="mic-container">
+              <canvas id="waveform" width="150" height="150" class="waveform-circle"></canvas>
+              <button class="voice-mic-btn" id="voice-mic-btn">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+              </button>
             </div>
 
-            <div class="voice-content">
-              <div class="mic-container">
-                <canvas id="waveform" width="150" height="150" class="waveform-circle"></canvas>
-                <button class="voice-mic-btn" id="voice-mic-btn">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                </button>
-              </div>
-
-              <div class="voice-status" id="voice-status">Tap to speak</div>
-            </div>
+            <div class="voice-status" id="voice-status">Tap to speak</div>
           </div>
         </div>
       `;
@@ -769,27 +745,6 @@
         .mode-toggle:hover {
           background: rgba(0,229,255,0.15);
           box-shadow: 0 0 12px rgba(0,229,255,0.2);
-        }
-
-        .voice-layout {
-          flex: 1;
-          display: flex;
-          gap: 0;
-          overflow: hidden;
-        }
-
-        .voice-sidebar {
-          width: 40%;
-          border-right: 1px solid rgba(0,229,255,0.1);
-          background: rgba(10,22,40,0.5);
-          display: flex;
-          flex-direction: column;
-        }
-
-        .voice-sidebar .messages-area {
-          flex: 1;
-          padding: 12px;
-          gap: 8px;
         }
 
         .voice-content {
