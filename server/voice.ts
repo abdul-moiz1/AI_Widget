@@ -152,8 +152,11 @@ async function generateWithElevenLabs(
   const apiKey = process.env.ELEVEN_LABS_API_KEY;
 
   if (!apiKey) {
+    console.warn("ElevenLabs API key not found in environment variables");
     return null;
   }
+
+  console.log(`Calling ElevenLabs for voiceId: ${voiceId}, text length: ${text.length}`);
 
   try {
     const response = await fetch(
@@ -174,6 +177,8 @@ async function generateWithElevenLabs(
         }),
       }
     );
+
+    console.log(`ElevenLabs response status: ${response.status}`);
 
     if (!response.ok) {
       console.warn(
