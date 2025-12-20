@@ -870,7 +870,7 @@
           <div class="text-header">
             ${this.logoUrl ? `<img src="${this.logoUrl}" alt="logo" class="text-logo" />` : ''}
             <span class="text-title">${this.businessName}</span>
-            <span class="voice-indicator" title="${langName} - ${this.voiceSettings.voiceGender === 'female' ? 'Female' : 'Male'}">${langName.slice(0, 2)} ${genderName}</span>
+            <button class="voice-indicator-btn" id="voice-indicator-btn" title="${langName} - ${this.voiceSettings.voiceGender === 'female' ? 'Female' : 'Male'}">${langName.slice(0, 2)} ${genderName}</button>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Voice Mode">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path></svg>
             </button>
@@ -1237,6 +1237,28 @@
           white-space: nowrap;
         }
 
+        .voice-indicator-btn {
+          font-size: 12px;
+          padding: 4px 8px;
+          background: rgba(0, 229, 255, 0.15);
+          border: 1px solid rgba(0, 229, 255, 0.3);
+          border-radius: 4px;
+          color: var(--primary);
+          font-weight: 500;
+          white-space: nowrap;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .voice-indicator-btn:hover {
+          background: rgba(0, 229, 255, 0.25);
+          border-color: rgba(0, 229, 255, 0.5);
+          box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+        }
+
         .messages-area {
           flex: 1;
           overflow-y: auto;
@@ -1405,10 +1427,19 @@
 
         // Close panel when clicking outside (but not on buttons inside it)
         this.shadowRoot.addEventListener('click', (e) => {
-          if (!e.target.closest('.voice-settings-panel') && !e.target.closest('.voice-settings-btn')) {
+          if (!e.target.closest('.voice-settings-panel') && !e.target.closest('.voice-settings-btn') && !e.target.closest('.voice-indicator-btn')) {
             settingsPanel.classList.remove('open');
           }
         });
+
+        // Voice Indicator Button in Chat Mode
+        const voiceIndicatorBtn = this.shadowRoot.getElementById('voice-indicator-btn');
+        if (voiceIndicatorBtn && settingsPanel) {
+          voiceIndicatorBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsPanel.classList.toggle('open');
+          });
+        }
       }
       
       const modeToggle = this.shadowRoot.getElementById('mode-toggle-btn');
