@@ -1,9 +1,11 @@
 import { Switch, Route } from "wouter";
+import { useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { WidgetVoiceSelector, type WidgetVoiceSettings } from "@/components/widget-voice-selector";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -65,11 +67,27 @@ function Router() {
 }
 
 function App() {
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceSettings, setVoiceSettings] = useState<WidgetVoiceSettings>({
+    language: "en",
+    gender: "female",
+    style: "calm"
+  });
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Router />
+        {/* Voice Selector Widget */}
+        <div className="fixed bottom-24 right-4 z-40">
+          <WidgetVoiceSelector 
+            value={voiceSettings}
+            onChange={setVoiceSettings}
+            isOpen={voiceOpen}
+            onToggle={() => setVoiceOpen(!voiceOpen)}
+          />
+        </div>
       </TooltipProvider>
     </QueryClientProvider>
   );
