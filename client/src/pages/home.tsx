@@ -44,13 +44,13 @@ export default function Home() {
           <a href="#integration" className="text-muted-foreground hover:text-primary transition-colors">Integration</a>
           <a href="#pricing" className="text-muted-foreground hover:text-primary transition-colors">Pricing</a>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <a href="/admin">
-            <Button variant="ghost" size="sm" className="text-xs">
+            <Button variant="outline" size="sm" className="text-xs border-white/20">
               Admin
             </Button>
           </a>
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full">
+          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
             Get Started
           </Button>
         </div>
