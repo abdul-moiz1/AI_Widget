@@ -23,7 +23,7 @@
 (function() {
   const CONFIG = {
     backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint for chat
-    voiceBackendUrl: 'https://e9b976e5-3a93-497b-b12a-428338fd071b-00-3gxlp8uxtiz48.worf.replit.dev', // Replit backend for Eleven Labs voice synthesis
+    voiceBackendUrl: window.AIVoiceWidgetConfig?.voiceBackendUrl || '/api/voice', // Use relative path or custom URL
     theme: {
       primary: '#00e5ff',
       secondary: '#2d3748',
@@ -436,7 +436,7 @@
         console.log('🎙️ Requesting voice from Eleven Labs:', { text, language, gender, style });
 
         // Fetch audio from Eleven Labs via Replit backend
-        const response = await fetch(`${CONFIG.voiceBackendUrl}/api/voice`, {
+        const response = await fetch(`${CONFIG.voiceBackendUrl}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
