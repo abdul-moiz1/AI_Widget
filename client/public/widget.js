@@ -821,13 +821,13 @@
     }
 
     renderVoiceMode() {
+      const langCode = this.voiceSettings.language === 'en' ? 'En' : this.voiceSettings.language === 'es' ? 'Es' : 'Ar';
+      const genderName = this.voiceSettings.voiceGender === 'female' ? '♀' : '♂';
       return `
         <div class="voice-mode">
           <div class="voice-header">
-            <div style="flex: 1;"></div>
-            <button class="voice-settings-btn" id="voice-settings-btn" title="Voice Settings">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path></svg>
-            </button>
+            <span class="header-title">${this.businessName}</span>
+            <button class="voice-settings-btn" id="voice-settings-btn" title="Voice Settings: ${langCode} ${genderName}">${langCode} ${genderName}</button>
             <div class="voice-settings-panel" id="voice-settings-panel">
               <div class="voice-option-label">Language</div>
               <button class="voice-option ${this.voiceSettings.language === 'en' ? 'active' : ''}" data-lang="en">English</button>
@@ -863,36 +863,31 @@
     }
 
     renderTextMode() {
-      const langName = this.voiceSettings.language === 'en' ? 'English' : this.voiceSettings.language === 'es' ? 'Spanish' : 'Arabic';
+      const langCode = this.voiceSettings.language === 'en' ? 'En' : this.voiceSettings.language === 'es' ? 'Es' : 'Ar';
       const genderName = this.voiceSettings.voiceGender === 'female' ? '♀' : '♂';
       return `
         <div class="text-mode">
           <div class="text-header">
-            ${this.logoUrl ? `<img src="${this.logoUrl}" alt="logo" class="text-logo" />` : ''}
-            <span class="text-title">${this.businessName}</span>
-            <button class="voice-indicator-btn" id="voice-indicator-btn" title="${langName} - ${this.voiceSettings.voiceGender === 'female' ? 'Female' : 'Male'}">${langName.slice(0, 2)} ${genderName}</button>
-            <button class="voice-settings-btn" id="voice-settings-btn-text" title="Voice Settings">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path></svg>
-            </button>
+            <span class="header-title">${this.businessName}</span>
+            <button class="voice-settings-btn" id="voice-settings-btn-text" title="Voice Settings: ${langCode} ${genderName}">${langCode} ${genderName}</button>
+            <div class="voice-settings-panel" id="voice-settings-panel-text">
+              <div class="voice-option-label">Language</div>
+              <button class="voice-option ${this.voiceSettings.language === 'en' ? 'active' : ''}" data-lang="en">English</button>
+              <button class="voice-option ${this.voiceSettings.language === 'es' ? 'active' : ''}" data-lang="es">Spanish</button>
+              <button class="voice-option ${this.voiceSettings.language === 'ar' ? 'active' : ''}" data-lang="ar">Arabic</button>
+              
+              <div class="voice-option-label" style="margin-top: 12px;">Gender</div>
+              <button class="voice-option ${this.voiceSettings.voiceGender === 'female' ? 'active' : ''}" data-gender="female">Female</button>
+              <button class="voice-option ${this.voiceSettings.voiceGender === 'male' ? 'active' : ''}" data-gender="male">Male</button>
+
+              <div class="voice-option-label" style="margin-top: 12px;">Style</div>
+              <button class="voice-option ${this.voiceSettings.style === 'calm' ? 'active' : ''}" data-style="calm">Calm</button>
+              <button class="voice-option ${this.voiceSettings.style === 'friendly' ? 'active' : ''}" data-style="friendly">Friendly</button>
+              <button class="voice-option ${this.voiceSettings.style === 'professional' ? 'active' : ''}" data-style="professional">Professional</button>
+            </div>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Voice Mode">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path></svg>
             </button>
-          </div>
-          
-          <div class="voice-settings-panel" id="voice-settings-panel-text">
-            <div class="voice-option-label">Language</div>
-            <button class="voice-option ${this.voiceSettings.language === 'en' ? 'active' : ''}" data-lang="en">English</button>
-            <button class="voice-option ${this.voiceSettings.language === 'es' ? 'active' : ''}" data-lang="es">Spanish</button>
-            <button class="voice-option ${this.voiceSettings.language === 'ar' ? 'active' : ''}" data-lang="ar">Arabic</button>
-            
-            <div class="voice-option-label" style="margin-top: 12px;">Gender</div>
-            <button class="voice-option ${this.voiceSettings.voiceGender === 'female' ? 'active' : ''}" data-gender="female">Female</button>
-            <button class="voice-option ${this.voiceSettings.voiceGender === 'male' ? 'active' : ''}" data-gender="male">Male</button>
-
-            <div class="voice-option-label" style="margin-top: 12px;">Style</div>
-            <button class="voice-option ${this.voiceSettings.style === 'calm' ? 'active' : ''}" data-style="calm">Calm</button>
-            <button class="voice-option ${this.voiceSettings.style === 'friendly' ? 'active' : ''}" data-style="friendly">Friendly</button>
-            <button class="voice-option ${this.voiceSettings.style === 'professional' ? 'active' : ''}" data-style="professional">Professional</button>
           </div>
           
           <div class="messages-area" id="messages-container">
@@ -1039,19 +1034,32 @@
           border: 1px solid rgba(0,229,255,0.2);
           color: var(--primary);
           cursor: pointer;
-          padding: 8px;
+          padding: 6px 12px;
           border-radius: 8px;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 36px;
-          height: 36px;
+          font-size: 13px;
+          font-weight: 500;
+          white-space: nowrap;
+          min-width: fit-content;
         }
 
         .voice-settings-btn:hover {
           background: rgba(0,229,255,0.15);
           box-shadow: 0 0 12px rgba(0,229,255,0.2);
+        }
+
+        .header-title {
+          font-weight: 600;
+          color: var(--text);
+          font-size: 16px;
+          flex: 1;
+          background: linear-gradient(135deg, var(--primary), #0099cc);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
 
         .voice-settings-panel {
@@ -1211,13 +1219,11 @@
         }
 
         .text-header {
-          padding: 16px 20px;
-          background: linear-gradient(135deg, rgba(0,229,255,0.1), rgba(0,150,200,0.05));
-          border-bottom: 1px solid rgba(0,229,255,0.1);
+          padding: 16px;
           display: flex;
-          align-items: center;
           justify-content: space-between;
-          gap: 12px;
+          align-items: center;
+          border-bottom: 1px solid rgba(0,229,255,0.1);
         }
 
         .text-logo {
@@ -1455,19 +1461,10 @@
 
         // Close panel when clicking outside (but not on buttons inside it)
         this.shadowRoot.addEventListener('click', (e) => {
-          if (!e.target.closest('.voice-settings-panel') && !e.target.closest('.voice-settings-btn') && !e.target.closest('.voice-indicator-btn')) {
+          if (!e.target.closest('.voice-settings-panel') && !e.target.closest('.voice-settings-btn')) {
             activeSettingsPanel.classList.remove('open');
           }
         });
-
-        // Voice Indicator Button in Chat Mode
-        const voiceIndicatorBtn = this.shadowRoot.getElementById('voice-indicator-btn');
-        if (voiceIndicatorBtn) {
-          voiceIndicatorBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            activeSettingsPanel.classList.toggle('open');
-          });
-        }
       }
       
       const modeToggle = this.shadowRoot.getElementById('mode-toggle-btn');
