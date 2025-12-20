@@ -219,9 +219,13 @@ export async function generateVoice(request: VoiceRequest): Promise<{
   const gender = request.gender || "female";
   const style = request.style || "calm";
 
+  const hasApiKey = !!process.env.ELEVEN_LABS_API_KEY;
   const isElevenLabsEnabled =
-    process.env.ELEVENLABS_ENABLED === "true" &&
-    process.env.ELEVEN_LABS_API_KEY;
+    process.env.ELEVENLABS_ENABLED === "true" && hasApiKey;
+  
+  if (!hasApiKey) {
+    console.warn("⚠️ ELEVEN_LABS_API_KEY is not set in environment");
+  }
 
   // If ElevenLabs is enabled, attempt to use it
   if (isElevenLabsEnabled) {
