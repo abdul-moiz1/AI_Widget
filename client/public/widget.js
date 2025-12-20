@@ -706,7 +706,20 @@
       return `
         <div class="voice-mode">
           <div class="voice-header">
-            ${this.logoUrl ? `<img src="${this.logoUrl}" alt="logo" class="voice-logo" />` : ''}
+            <div style="flex: 1;"></div>
+            <button class="voice-settings-btn" id="voice-settings-btn" title="Voice Settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path></svg>
+            </button>
+            <div class="voice-settings-panel" id="voice-settings-panel">
+              <div class="voice-option-label">Language</div>
+              <button class="voice-option ${this.voiceSettings.language === 'en' ? 'active' : ''}" data-lang="en">English</button>
+              <button class="voice-option ${this.voiceSettings.language === 'es' ? 'active' : ''}" data-lang="es">Spanish</button>
+              <button class="voice-option ${this.voiceSettings.language === 'ar' ? 'active' : ''}" data-lang="ar">Arabic</button>
+              
+              <div class="voice-option-label" style="margin-top: 12px;">Gender</div>
+              <button class="voice-option ${this.voiceSettings.voiceGender === 'female' ? 'active' : ''}" data-gender="female">Female</button>
+              <button class="voice-option ${this.voiceSettings.voiceGender === 'male' ? 'active' : ''}" data-gender="male">Male</button>
+            </div>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Messages">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </button>
@@ -871,8 +884,77 @@
         .voice-header {
           padding: 16px;
           display: flex;
-          justify-content: flex-end;
+          justify-content: space-between;
+          align-items: center;
           border-bottom: 1px solid rgba(0,229,255,0.1);
+        }
+
+        .voice-settings-btn {
+          background: rgba(0,229,255,0.08);
+          border: 1px solid rgba(0,229,255,0.2);
+          color: var(--primary);
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 8px;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+        }
+
+        .voice-settings-btn:hover {
+          background: rgba(0,229,255,0.15);
+          box-shadow: 0 0 12px rgba(0,229,255,0.2);
+        }
+
+        .voice-settings-panel {
+          position: absolute;
+          top: 60px;
+          right: 16px;
+          background: linear-gradient(135deg, rgba(10,22,40,0.95), rgba(26,41,66,0.95));
+          border: 1px solid rgba(0,229,255,0.2);
+          border-radius: 12px;
+          padding: 12px;
+          z-index: 1001;
+          min-width: 180px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+          display: none;
+        }
+
+        .voice-settings-panel.open {
+          display: block;
+        }
+
+        .voice-option {
+          background: rgba(0,229,255,0.08);
+          border: 1px solid rgba(0,229,255,0.15);
+          color: var(--text);
+          padding: 8px 12px;
+          margin: 4px 0;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 12px;
+          transition: all 0.2s;
+        }
+
+        .voice-option:hover {
+          background: rgba(0,229,255,0.15);
+          border-color: rgba(0,229,255,0.3);
+        }
+
+        .voice-option.active {
+          background: rgba(0,229,255,0.3);
+          border-color: rgba(0,229,255,0.5);
+          color: var(--primary);
+        }
+
+        .voice-option-label {
+          font-size: 11px;
+          color: rgba(255,255,255,0.6);
+          margin-top: 8px;
+          margin-bottom: 4px;
         }
 
         .mode-toggle {
@@ -1142,6 +1224,36 @@
 
       // Event Listeners
       this.shadowRoot.querySelector('.toggle-btn').addEventListener('click', () => this.toggleChat());
+      
+      // Voice Settings Panel Listeners
+      const settingsBtn = this.shadowRoot.getElementById('voice-settings-btn');
+      const settingsPanel = this.shadowRoot.getElementById('voice-settings-panel');
+      if (settingsBtn && settingsPanel) {
+        settingsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          settingsPanel.classList.toggle('open');
+        });
+
+        this.shadowRoot.querySelectorAll('[data-lang]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            this.voiceSettings.language = e.target.getAttribute('data-lang');
+            this.shadowRoot.querySelectorAll('[data-lang]').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            console.log('🎤 Voice language changed to:', this.voiceSettings.language);
+          });
+        });
+
+        this.shadowRoot.querySelectorAll('[data-gender]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            this.voiceSettings.voiceGender = e.target.getAttribute('data-gender');
+            this.shadowRoot.querySelectorAll('[data-gender]').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            console.log('🎤 Voice gender changed to:', this.voiceSettings.voiceGender);
+          });
+        });
+
+        document.addEventListener('click', () => settingsPanel.classList.remove('open'));
+      }
       
       const modeToggle = this.shadowRoot.getElementById('mode-toggle-btn');
       if (modeToggle) {
