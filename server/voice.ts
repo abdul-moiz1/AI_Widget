@@ -149,7 +149,7 @@ async function generateWithElevenLabs(
   text: string,
   voiceId: string
 ): Promise<Buffer | null> {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
+  const apiKey = process.env.ELEVEN_LABS_API_KEY;
 
   if (!apiKey) {
     return null;
@@ -215,7 +215,7 @@ export async function generateVoice(request: VoiceRequest): Promise<{
 
   const isElevenLabsEnabled =
     process.env.ELEVENLABS_ENABLED === "true" &&
-    process.env.ELEVENLABS_API_KEY;
+    process.env.ELEVEN_LABS_API_KEY;
 
   // If ElevenLabs is enabled, attempt to use it
   if (isElevenLabsEnabled) {
