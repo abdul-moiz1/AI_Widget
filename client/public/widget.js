@@ -71,7 +71,8 @@
       this.logoUrl = null;
       this.voiceSettings = {
         language: 'en',
-        voiceGender: 'neutral',
+        voiceGender: 'female',
+        style: 'calm',
         speakingSpeed: 1,
         pitch: 1
       };
@@ -433,7 +434,7 @@
         const gender = this.voiceSettings.voiceGender || 'female';
         const style = this.voiceSettings.style || 'calm';
 
-        console.log('🎙️ Requesting voice from Eleven Labs:', { text, language, gender, style });
+        console.log('🎙️ Requesting voice from ElevenLabs:', { text, language, gender, style });
 
         // Fetch audio from Eleven Labs via Replit backend
         const response = await fetch(`${CONFIG.voiceBackendUrl}`, {
@@ -821,6 +822,11 @@
               <div class="voice-option-label" style="margin-top: 12px;">Gender</div>
               <button class="voice-option ${this.voiceSettings.voiceGender === 'female' ? 'active' : ''}" data-gender="female">Female</button>
               <button class="voice-option ${this.voiceSettings.voiceGender === 'male' ? 'active' : ''}" data-gender="male">Male</button>
+
+              <div class="voice-option-label" style="margin-top: 12px;">Style</div>
+              <button class="voice-option ${this.voiceSettings.style === 'calm' ? 'active' : ''}" data-style="calm">Calm</button>
+              <button class="voice-option ${this.voiceSettings.style === 'friendly' ? 'active' : ''}" data-style="friendly">Friendly</button>
+              <button class="voice-option ${this.voiceSettings.style === 'professional' ? 'active' : ''}" data-style="professional">Professional</button>
             </div>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Messages">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
@@ -1367,6 +1373,16 @@
             this.shadowRoot.querySelectorAll('[data-gender]').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             console.log('🎤 Voice gender changed to:', this.voiceSettings.voiceGender);
+          });
+        });
+
+        this.shadowRoot.querySelectorAll('[data-style]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.voiceSettings.style = e.target.getAttribute('data-style');
+            this.shadowRoot.querySelectorAll('[data-style]').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            console.log('🎤 Voice style changed to:', this.voiceSettings.style);
           });
         });
 
