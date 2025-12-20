@@ -842,11 +842,14 @@
     }
 
     renderTextMode() {
+      const langName = this.voiceSettings.language === 'en' ? 'English' : this.voiceSettings.language === 'es' ? 'Spanish' : 'Arabic';
+      const genderName = this.voiceSettings.voiceGender === 'female' ? '♀' : '♂';
       return `
         <div class="text-mode">
           <div class="text-header">
             ${this.logoUrl ? `<img src="${this.logoUrl}" alt="logo" class="text-logo" />` : ''}
             <span class="text-title">${this.businessName}</span>
+            <span class="voice-indicator" title="${langName} - ${this.voiceSettings.voiceGender === 'female' ? 'Female' : 'Male'}">${langName.slice(0, 2)} ${genderName}</span>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Voice Mode">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path></svg>
             </button>
@@ -1200,6 +1203,17 @@
           flex: 1;
         }
 
+        .voice-indicator {
+          font-size: 12px;
+          padding: 4px 8px;
+          background: rgba(0, 229, 255, 0.15);
+          border: 1px solid rgba(0, 229, 255, 0.3);
+          border-radius: 4px;
+          color: var(--primary);
+          font-weight: 500;
+          white-space: nowrap;
+        }
+
         .messages-area {
           flex: 1;
           overflow-y: auto;
@@ -1338,6 +1352,7 @@
 
         this.shadowRoot.querySelectorAll('[data-lang]').forEach(btn => {
           btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.voiceSettings.language = e.target.getAttribute('data-lang');
             this.shadowRoot.querySelectorAll('[data-lang]').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
@@ -1347,6 +1362,7 @@
 
         this.shadowRoot.querySelectorAll('[data-gender]').forEach(btn => {
           btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.voiceSettings.voiceGender = e.target.getAttribute('data-gender');
             this.shadowRoot.querySelectorAll('[data-gender]').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
@@ -1354,7 +1370,12 @@
           });
         });
 
-        document.addEventListener('click', () => settingsPanel.classList.remove('open'));
+        // Close panel when clicking outside (but not on buttons inside it)
+        this.shadowRoot.addEventListener('click', (e) => {
+          if (!e.target.closest('.voice-settings-panel') && !e.target.closest('.voice-settings-btn')) {
+            settingsPanel.classList.remove('open');
+          }
+        });
       }
       
       const modeToggle = this.shadowRoot.getElementById('mode-toggle-btn');
