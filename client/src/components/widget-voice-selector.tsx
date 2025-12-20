@@ -34,16 +34,6 @@ export function WidgetVoiceSelector({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 hover:bg-accent rounded-lg transition-colors cursor-pointer"
-        title="Voice Settings"
-        data-testid="button-voice-settings"
-      >
-        <Volume2 className="w-5 h-5 text-foreground" />
-      </button>
-
       {isOpen && (
         <div className="absolute bottom-20 right-0 bg-gradient-to-br from-background/95 to-background/90 border border-white/20 rounded-xl shadow-2xl backdrop-blur-md p-4 w-72 z-50 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {/* Header */}
