@@ -844,7 +844,7 @@
               <button class="voice-option ${this.voiceSettings.style === 'professional' ? 'active' : ''}" data-style="professional">Professional</button>
             </div>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Messages">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </button>
           </div>
 
@@ -886,7 +886,7 @@
               <button class="voice-option ${this.voiceSettings.style === 'professional' ? 'active' : ''}" data-style="professional">Professional</button>
             </div>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Voice Mode">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path></svg>
             </button>
           </div>
           
@@ -1119,14 +1119,14 @@
           border: 1px solid rgba(0,229,255,0.2);
           color: var(--primary);
           cursor: pointer;
-          padding: 8px 12px;
+          padding: 6px 10px;
           border-radius: 8px;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
-          height: 36px;
-          min-width: 36px;
+          height: 32px;
+          width: 32px;
         }
 
         .mode-toggle:hover {
