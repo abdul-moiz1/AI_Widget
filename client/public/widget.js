@@ -1119,14 +1119,13 @@
           border: 1px solid rgba(0,229,255,0.2);
           color: var(--primary);
           cursor: pointer;
-          padding: 8px 14px;
+          padding: 8px 12px;
           border-radius: 8px;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
           height: 36px;
-          width: 36px;
           min-width: 36px;
         }
 
