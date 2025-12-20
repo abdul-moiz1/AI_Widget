@@ -22,7 +22,8 @@
 
 (function() {
   const CONFIG = {
-    backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint only
+    backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint for chat
+    voiceBackendUrl: 'https://e9b976e5-3a93-497b-b12a-428338fd071b-00-3gxlp8uxtiz48.worf.replit.dev', // Replit backend for Eleven Labs voice synthesis
     theme: {
       primary: '#00e5ff',
       secondary: '#2d3748',
@@ -57,6 +58,7 @@
       this.lastAIResponse = ''; // Store for display in voice mode
       this.silenceTimeout = null;
       this.lastSpeechTime = 0;
+      this.audioElement = null; // For playing Eleven Labs audio
       this.speechStartTime = 0;
       this.silenceDuration = 400; // 400ms of silence to stop listening (reduced from 800ms)
       this.minSpeechDuration = 200; // Minimum 200ms of speech to process (filter noise)
@@ -413,7 +415,89 @@
       }
     }
 
-    speak(text) {
+    async speak(text) {
+      // Stop any existing audio and listening
+      this.listeningActive = false;
+      try {
+        this.recognition.stop();
+      } catch (e) {}
+      
+      this.isSpeaking = true;
+      this.updateUIState();
+      this.startVisualizer();
+      this.simulateAudioData();
+
+      try {
+        // Get language and voice settings
+        const language = this.voiceSettings.language || 'en';
+        const gender = this.voiceSettings.voiceGender || 'female';
+        const style = this.voiceSettings.style || 'calm';
+
+        console.log('🎙️ Requesting voice from Eleven Labs:', { text, language, gender, style });
+
+        // Fetch audio from Eleven Labs via Replit backend
+        const response = await fetch(`${CONFIG.voiceBackendUrl}/api/voice`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            language,
+            gender,
+            style
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Voice API error: ${response.status}`);
+        }
+
+        // Get the audio blob
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        // Play the audio
+        if (!this.audioElement) {
+          this.audioElement = new Audio();
+          this.audioElement.onended = () => {
+            this.isSpeaking = false;
+            this.stopVisualizer();
+            this.isProcessing = false;
+            this.updateUIState();
+            
+            if (this.isVoiceMode && this.isOpen) {
+              this.listeningActive = true;
+              setTimeout(() => {
+                try {
+                  console.log('🎤 Restarting listening after speech');
+                  this.recognition.start();
+                } catch (e) {
+                  console.error('Failed to restart recognition:', e);
+                }
+              }, 50);
+            }
+          };
+        }
+
+        this.audioElement.src = audioUrl;
+        this.audioElement.play().catch(err => {
+          console.error('Failed to play audio:', err);
+          this.isSpeaking = false;
+          this.stopVisualizer();
+          this.isProcessing = false;
+          this.updateUIState();
+        });
+
+        console.log('🎙️ Playing audio from Eleven Labs');
+      } catch (error) {
+        console.error('🎙️ Eleven Labs voice error:', error);
+        // Fallback to browser TTS if Eleven Labs fails
+        console.log('Falling back to browser TTS...');
+        this.fallbackSpeak(text);
+      }
+    }
+
+    fallbackSpeak(text) {
+      // Fallback to native SpeechSynthesis if Eleven Labs fails
       if (this.synthesis.speaking) {
         this.synthesis.cancel();
       }
@@ -423,21 +507,8 @@
       const voice = this.voices.find(v => v.lang.startsWith(lang.split('-')[0])) || this.voices[0];
       if (voice) utterance.voice = voice;
       
-      // Apply voice settings from business config
       utterance.rate = this.voiceSettings.speakingSpeed || 1;
       utterance.pitch = this.voiceSettings.pitch || 1;
-
-      utterance.onstart = () => {
-        this.listeningActive = false;
-        try {
-          this.recognition.stop();
-        } catch (e) {}
-        
-        this.isSpeaking = true;
-        this.updateUIState();
-        this.startVisualizer();
-        this.simulateAudioData();
-      };
 
       utterance.onend = () => {
         this.isSpeaking = false;
