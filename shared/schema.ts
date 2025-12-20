@@ -22,6 +22,8 @@ export const conversations = pgTable("conversations", {
   sessionId: varchar("session_id").primaryKey(),
   persona: varchar("persona").default("assistant"),
   language: varchar("language").default("en"),
+  voiceGender: varchar("voice_gender").default("female"),
+  voiceStyle: varchar("voice_style").default("calm"),
   messages: jsonb("messages").default(sql`'[]'::jsonb`),
   createdAt: timestamp("created_at").default(sql`now()`),
   updatedAt: timestamp("updated_at").default(sql`now()`),
@@ -33,3 +35,12 @@ export type ConversationMessage = {
   text: string;
   timestamp: string;
 };
+
+// Voice preferences schema
+export const voicePreferences = z.object({
+  language: z.string().default("en"),
+  gender: z.enum(["female", "male"]).default("female"),
+  style: z.enum(["calm", "friendly", "professional"]).default("calm"),
+});
+
+export type VoicePreference = z.infer<typeof voicePreferences>;
