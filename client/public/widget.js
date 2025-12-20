@@ -1026,6 +1026,7 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 12px;
           border-bottom: 1px solid rgba(0,229,255,0.1);
         }
 
@@ -1034,7 +1035,7 @@
           border: 1px solid rgba(0,229,255,0.2);
           color: var(--primary);
           cursor: pointer;
-          padding: 6px 12px;
+          padding: 8px 14px;
           border-radius: 8px;
           transition: all 0.2s;
           display: flex;
@@ -1044,6 +1045,7 @@
           font-weight: 500;
           white-space: nowrap;
           min-width: fit-content;
+          height: 36px;
         }
 
         .voice-settings-btn:hover {
@@ -1117,12 +1119,15 @@
           border: 1px solid rgba(0,229,255,0.2);
           color: var(--primary);
           cursor: pointer;
-          padding: 8px;
+          padding: 8px 14px;
           border-radius: 8px;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
+          height: 36px;
+          width: 36px;
+          min-width: 36px;
         }
 
         .mode-toggle:hover {
