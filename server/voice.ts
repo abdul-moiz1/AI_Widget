@@ -150,7 +150,7 @@ async function generateWithElevenLabs(
   text: string,
   voiceId: string
 ): Promise<Buffer | null> {
-  const apiKey = process.env.ELEVEN_LABS_API_KEY;
+  const apiKey = process.env.ELEVENLABS_API_KEY;
 
   if (!apiKey) {
     console.warn("❌ ElevenLabs API key not found in environment variables");
@@ -224,12 +224,12 @@ export async function generateVoice(request: VoiceRequest): Promise<{
   const gender = request.gender || "female";
   const style = request.style || "calm";
 
-  const hasApiKey = !!process.env.ELEVEN_LABS_API_KEY;
+  const hasApiKey = !!process.env.ELEVENLABS_API_KEY;
   const isElevenLabsEnabled =
     process.env.ELEVENLABS_ENABLED === "true" && hasApiKey;
   
   if (!hasApiKey) {
-    console.warn("⚠️ ELEVEN_LABS_API_KEY is not set in environment");
+    console.warn("⚠️ ELEVENLABS_API_KEY is not set in environment");
   }
 
   // If ElevenLabs is enabled, attempt to use it
