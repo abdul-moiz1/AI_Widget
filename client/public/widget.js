@@ -451,8 +451,26 @@
           throw new Error(`Voice API error: ${response.status}`);
         }
 
-        // Get the audio blob
+        // Check content-type to determine if we got audio or JSON
+        const contentType = response.headers.get('content-type');
+        console.log('📝 Response content-type:', contentType);
+        
+        if (contentType && contentType.includes('application/json')) {
+          // Backend returned JSON (fallback response)
+          const data = await response.json();
+          console.log('⚠️ Backend returned fallback response:', data);
+          this.fallbackSpeak(text);
+          return;
+        }
+
+        // Get the audio blob (audio/mpeg or audio/*)
         const audioBlob = await response.blob();
+        console.log('🎵 Audio blob size:', audioBlob.size, 'bytes');
+        
+        if (audioBlob.size === 0) {
+          throw new Error('Empty audio blob received');
+        }
+
         const audioUrl = URL.createObjectURL(audioBlob);
 
         // Play the audio
@@ -479,15 +497,28 @@
         }
 
         this.audioElement.src = audioUrl;
-        this.audioElement.play().catch(err => {
-          console.error('Failed to play audio:', err);
-          this.isSpeaking = false;
-          this.stopVisualizer();
-          this.isProcessing = false;
-          this.updateUIState();
-        });
-
-        console.log('🎙️ Playing audio from Eleven Labs');
+        
+        // Ensure audio can play with user interaction
+        this.audioElement.volume = 1;
+        
+        const playPromise = this.audioElement.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('✅ Audio playing from Eleven Labs');
+            })
+            .catch(error => {
+              console.error('❌ Audio play failed:', error);
+              this.isSpeaking = false;
+              this.stopVisualizer();
+              this.isProcessing = false;
+              this.updateUIState();
+              // Fallback if audio playback fails
+              this.fallbackSpeak(text);
+            });
+        } else {
+          console.log('✅ Audio playing from Eleven Labs');
+        }
       } catch (error) {
         console.error('🎙️ Eleven Labs voice error:', error);
         // Fallback to browser TTS if Eleven Labs fails
