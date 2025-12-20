@@ -871,9 +871,28 @@
             ${this.logoUrl ? `<img src="${this.logoUrl}" alt="logo" class="text-logo" />` : ''}
             <span class="text-title">${this.businessName}</span>
             <button class="voice-indicator-btn" id="voice-indicator-btn" title="${langName} - ${this.voiceSettings.voiceGender === 'female' ? 'Female' : 'Male'}">${langName.slice(0, 2)} ${genderName}</button>
+            <button class="voice-settings-btn" id="voice-settings-btn-text" title="Voice Settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24"></path></svg>
+            </button>
             <button class="mode-toggle" id="mode-toggle-btn" title="Switch to Voice Mode">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path></svg>
             </button>
+          </div>
+          
+          <div class="voice-settings-panel" id="voice-settings-panel-text">
+            <div class="voice-option-label">Language</div>
+            <button class="voice-option ${this.voiceSettings.language === 'en' ? 'active' : ''}" data-lang="en">English</button>
+            <button class="voice-option ${this.voiceSettings.language === 'es' ? 'active' : ''}" data-lang="es">Spanish</button>
+            <button class="voice-option ${this.voiceSettings.language === 'ar' ? 'active' : ''}" data-lang="ar">Arabic</button>
+            
+            <div class="voice-option-label" style="margin-top: 12px;">Gender</div>
+            <button class="voice-option ${this.voiceSettings.voiceGender === 'female' ? 'active' : ''}" data-gender="female">Female</button>
+            <button class="voice-option ${this.voiceSettings.voiceGender === 'male' ? 'active' : ''}" data-gender="male">Male</button>
+
+            <div class="voice-option-label" style="margin-top: 12px;">Style</div>
+            <button class="voice-option ${this.voiceSettings.style === 'calm' ? 'active' : ''}" data-style="calm">Calm</button>
+            <button class="voice-option ${this.voiceSettings.style === 'friendly' ? 'active' : ''}" data-style="friendly">Friendly</button>
+            <button class="voice-option ${this.voiceSettings.style === 'professional' ? 'active' : ''}" data-style="professional">Professional</button>
           </div>
           
           <div class="messages-area" id="messages-container">
@@ -1386,13 +1405,22 @@
       // Event Listeners
       this.shadowRoot.querySelector('.toggle-btn').addEventListener('click', () => this.toggleChat());
       
-      // Voice Settings Panel Listeners
+      // Voice Settings Panel Listeners (Voice Mode)
       const settingsBtn = this.shadowRoot.getElementById('voice-settings-btn');
       const settingsPanel = this.shadowRoot.getElementById('voice-settings-panel');
-      if (settingsBtn && settingsPanel) {
-        settingsBtn.addEventListener('click', (e) => {
+      
+      // Voice Settings Panel Listeners (Text Mode)
+      const settingsBtnText = this.shadowRoot.getElementById('voice-settings-btn-text');
+      const settingsPanelText = this.shadowRoot.getElementById('voice-settings-panel-text');
+      
+      // Use either panel depending on which one exists
+      const activeSettingsBtn = settingsBtn || settingsBtnText;
+      const activeSettingsPanel = settingsPanel || settingsPanelText;
+      
+      if (activeSettingsBtn && activeSettingsPanel) {
+        activeSettingsBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          settingsPanel.classList.toggle('open');
+          activeSettingsPanel.classList.toggle('open');
         });
 
         this.shadowRoot.querySelectorAll('[data-lang]').forEach(btn => {
@@ -1428,16 +1456,16 @@
         // Close panel when clicking outside (but not on buttons inside it)
         this.shadowRoot.addEventListener('click', (e) => {
           if (!e.target.closest('.voice-settings-panel') && !e.target.closest('.voice-settings-btn') && !e.target.closest('.voice-indicator-btn')) {
-            settingsPanel.classList.remove('open');
+            activeSettingsPanel.classList.remove('open');
           }
         });
 
         // Voice Indicator Button in Chat Mode
         const voiceIndicatorBtn = this.shadowRoot.getElementById('voice-indicator-btn');
-        if (voiceIndicatorBtn && settingsPanel) {
+        if (voiceIndicatorBtn) {
           voiceIndicatorBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            settingsPanel.classList.toggle('open');
+            activeSettingsPanel.classList.toggle('open');
           });
         }
       }
