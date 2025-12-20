@@ -153,11 +153,12 @@ async function generateWithElevenLabs(
   const apiKey = process.env.ELEVEN_LABS_API_KEY;
 
   if (!apiKey) {
-    console.warn("ElevenLabs API key not found in environment variables");
+    console.warn("❌ ElevenLabs API key not found in environment variables");
     return null;
   }
 
-  console.log(`Calling ElevenLabs for voiceId: ${voiceId}, text length: ${text.length}`);
+  console.log(`✅ ElevenLabs API key found (length: ${apiKey.length})`);
+  console.log(`📞 Calling ElevenLabs for voiceId: ${voiceId}, text: "${text}"`);
 
   try {
     const response = await fetch(
@@ -170,7 +171,7 @@ async function generateWithElevenLabs(
         },
         body: JSON.stringify({
           text,
-          model_id: "eleven_monolingual_v1",
+          model_id: "eleven_turbo_v2_5", // Updated model - works on free and paid tiers
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
@@ -179,14 +180,18 @@ async function generateWithElevenLabs(
       }
     );
 
-    console.log(`ElevenLabs response status: ${response.status}`);
+    console.log(`📊 ElevenLabs response status: ${response.status}`);
 
     if (!response.ok) {
-      console.warn(
-        `ElevenLabs API error: ${response.status} ${response.statusText}`
+      const errorText = await response.text();
+      console.error(
+        `❌ ElevenLabs API error: ${response.status} ${response.statusText}`,
+        errorText
       );
       return null;
     }
+
+    console.log("✅ ElevenLabs audio generated successfully");
 
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
