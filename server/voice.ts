@@ -14,36 +14,37 @@ export interface VoiceRequest {
 }
 
 // Voice mapping catalog - maps user preferences to voice providers
+// Using standard Eleven Labs voice IDs available in all accounts
 const voiceCatalog = {
   elevenLabs: {
-    // English voices
-    en_female_calm: "IZSifMMhbKnZNXE91eYx",
-    en_female_friendly: "EXAVITQu4vr4xnSDxMaL",
-    en_female_professional: "21m00Tcm4TlvDq8ikWAM",
-    en_male_calm: "pNInz6obpgDQGcFmaJgB",
-    en_male_friendly: "jBpfuIE2acCO8z3wKNLl",
-    en_male_professional: "onwK4e9ZhZ51Go7IltC3",
+    // English voices - using default Eleven Labs voices
+    en_female_calm: "21m00Tcm4TlvDq8ikWAM",      // Rachel
+    en_female_friendly: "EXAVITQu4vr4xnSDxMaL",  // Bella
+    en_female_professional: "EXAVITQu4vr4xnSDxMaL", // Bella (reuse)
+    en_male_calm: "pNInz6obpgDQGcFmaJgB",        // Adam
+    en_male_friendly: "jBpfuIE2acCO8z3wKNLl",    // Charlie
+    en_male_professional: "pNInz6obpgDQGcFmaJgB", // Adam (reuse)
 
-    // Spanish voices
-    es_female_calm: "nPczCjzI2devNBz1zQrb",
+    // Spanish voices - using available standard voices
+    es_female_calm: "VR6AewLBeTwWjF0xOr0m",
     es_female_friendly: "VR6AewLBeTwWjF0xOr0m",
-    es_male_calm: "ErXwobaYiN2HKp8DUJQ0",
-    es_male_friendly: "MF3mGyEYCl7XYWbV7PZT",
+    es_male_calm: "pNInz6obpgDQGcFmaJgB",
+    es_male_friendly: "jBpfuIE2acCO8z3wKNLl",
 
-    // Arabic voices (Modern Standard Arabic)
-    ar_female_calm: "aYZ0n5Kc5VcVSL6XChXx",
-    ar_female_professional: "lMqOcyblZ92MX84b5f5x",
-    ar_male_calm: "tx3eKulP2CBUR3cj1xLD",
-    ar_male_professional: "JBFqnCBsd6RMkjVY3ZeJ",
+    // Arabic voices - using available standard voices
+    ar_female_calm: "EXAVITQu4vr4xnSDxMaL",
+    ar_female_professional: "EXAVITQu4vr4xnSDxMaL",
+    ar_male_calm: "pNInz6obpgDQGcFmaJgB",
+    ar_male_professional: "pNInz6obpgDQGcFmaJgB",
 
-    // French voices
-    fr_female_calm: "lMqOcyblZ92MX84b5f5x",
-    fr_female_friendly: "VR6AewLBeTwWjF0xOr0m",
-    fr_male_calm: "MF3mGyEYCl7XYWbV7PZT",
+    // French voices - using available standard voices
+    fr_female_calm: "VR6AewLBeTwWjF0xOr0m",
+    fr_female_friendly: "EXAVITQu4vr4xnSDxMaL",
+    fr_male_calm: "pNInz6obpgDQGcFmaJgB",
 
-    // German voices
-    de_female_calm: "aYZ0n5Kc5VcVSL6XChXx",
-    de_male_calm: "ErXwobaYiN2HKp8DUJQ0",
+    // German voices - using available standard voices
+    de_female_calm: "EXAVITQu4vr4xnSDxMaL",
+    de_male_calm: "pNInz6obpgDQGcFmaJgB",
   },
 
   fallback: {
