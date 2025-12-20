@@ -1,8 +1,6 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { ArrowRight, Code, MessageSquare, Mic, Zap, CheckCircle2, Smartphone, Gauge, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { VoicePreferences, type VoiceSettings } from "@/components/voice-preferences";
 import abstractBg from '@assets/generated_images/abstract_ai_waveform_background.png';
 
 const fadeInUp = {
@@ -12,11 +10,6 @@ const fadeInUp = {
 };
 
 export default function Home() {
-  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
-    language: "en",
-    gender: "female",
-    style: "calm"
-  });
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden selection:bg-primary selection:text-primary-foreground">
@@ -252,54 +245,6 @@ export default function Home() {
               <Button size="lg" variant="outline" className="rounded-full px-8">
                 Schedule Demo
               </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* Voice Settings Demo Section */}
-        <section id="voice-settings" className="container mx-auto px-6 py-24 border-t border-white/5">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Voice Preferences</h2>
-            <p className="text-muted-foreground text-lg">Choose your preferred voice language, gender, and style</p>
-          </div>
-
-          <div className="max-w-2xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Voice Preferences Component */}
-              <div>
-                <VoicePreferences 
-                  value={voiceSettings}
-                  onChange={setVoiceSettings}
-                />
-              </div>
-
-              {/* Preview */}
-              <div className="space-y-4">
-                <div className="bg-gradient-to-br from-white/10 to-white/5 border border-white/10 rounded-2xl p-6">
-                  <h3 className="font-semibold mb-4">Current Selection</h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Language:</span>
-                      <span className="font-medium capitalize">{voiceSettings.language.toUpperCase()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Gender:</span>
-                      <span className="font-medium capitalize">{voiceSettings.gender}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Style:</span>
-                      <span className="font-medium capitalize">{voiceSettings.style}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button 
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg"
-                  data-testid="button-apply-voice"
-                >
-                  Apply Voice Settings
-                </Button>
-              </div>
             </div>
           </div>
         </section>
