@@ -67,7 +67,6 @@ function Router() {
 }
 
 function App() {
-  const [voiceOpen, setVoiceOpen] = useState(false);
   const [voiceSettings, setVoiceSettings] = useState<WidgetVoiceSettings>({
     language: "en",
     gender: "female",
@@ -84,8 +83,6 @@ function App() {
           <WidgetVoiceSelector 
             value={voiceSettings}
             onChange={setVoiceSettings}
-            isOpen={voiceOpen}
-            onToggle={() => setVoiceOpen(!voiceOpen)}
           />
         </div>
       </TooltipProvider>
