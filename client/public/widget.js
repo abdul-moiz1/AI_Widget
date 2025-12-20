@@ -1043,10 +1043,11 @@
           border: 1px solid rgba(0,229,255,0.2);
           border-radius: 12px;
           padding: 12px;
-          z-index: 1001;
+          z-index: 99999;
           min-width: 180px;
           box-shadow: 0 8px 24px rgba(0,0,0,0.4);
           display: none;
+          pointer-events: auto;
         }
 
         .voice-settings-panel.open {
@@ -1063,6 +1064,7 @@
           cursor: pointer;
           font-size: 12px;
           transition: all 0.2s;
+          pointer-events: auto;
         }
 
         .voice-option:hover {
