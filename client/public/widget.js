@@ -21,9 +21,24 @@
  */
 
 (function() {
+  // Auto-detect the Replit domain from the script source
+  let voiceBackendUrl = window.AIVoiceWidgetConfig?.voiceBackendUrl;
+  if (!voiceBackendUrl) {
+    // Find the widget.js script tag and extract its domain
+    const scripts = document.querySelectorAll('script[src*="widget.js"]');
+    if (scripts.length > 0) {
+      const scriptSrc = scripts[scripts.length - 1].src;
+      const url = new URL(scriptSrc);
+      voiceBackendUrl = url.origin + '/api/voice';
+      console.log('🔗 Auto-detected Replit domain:', url.origin);
+    } else {
+      voiceBackendUrl = '/api/voice'; // Fallback to relative path
+    }
+  }
+
   const CONFIG = {
     backendUrl: 'https://chat-cgdxljuoea-uc.a.run.app', // Firebase Cloud Function endpoint for chat
-    voiceBackendUrl: window.AIVoiceWidgetConfig?.voiceBackendUrl || '/api/voice', // Use relative path or custom URL
+    voiceBackendUrl: voiceBackendUrl,
     theme: {
       primary: '#00e5ff',
       secondary: '#2d3748',
