@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Code, MessageSquare, Mic, Zap, CheckCircle2, Smartphone, Gauge, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 import abstractBg from '@assets/generated_images/abstract_ai_waveform_background.png';
 
 const fadeInUp = {
@@ -10,6 +11,7 @@ const fadeInUp = {
 };
 
 export default function Home() {
+  const [, setLocation] = useLocation();
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden selection:bg-primary selection:text-primary-foreground">
@@ -45,17 +47,30 @@ export default function Home() {
           <a href="#pricing" className="text-muted-foreground hover:text-primary transition-colors">Pricing</a>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
-          <a href="/client-login">
-            <Button variant="outline" size="sm" className="text-xs border-white/20">
-              Client
-            </Button>
-          </a>
-          <a href="/admin">
-            <Button variant="outline" size="sm" className="text-xs border-white/20">
-              Admin
-            </Button>
-          </a>
-          <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs border-white/20"
+            onClick={() => setLocation("/client-login")}
+            data-testid="button-header-client"
+          >
+            Client
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-xs border-white/20"
+            onClick={() => setLocation("/admin")}
+            data-testid="button-header-admin"
+          >
+            Admin
+          </Button>
+          <Button 
+            size="sm" 
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => setLocation("/client-login")}
+            data-testid="button-header-getstarted"
+          >
             Get Started
           </Button>
         </div>
