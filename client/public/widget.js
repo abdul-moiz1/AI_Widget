@@ -227,17 +227,19 @@
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       this.recognition = new SpeechRecognition();
-      this.recognition.continuous = false;
+      this.recognition.continuous = true; // Keep listening continuously
       this.recognition.interimResults = true;
       this.recognition.lang = navigator.language || 'en-US';
       this.recognition.maxAlternatives = 1;
       this.listeningActive = false;
+      this.lastTranscript = ''; // Track last transcript to detect silence
 
       this.recognition.onstart = () => {
         console.log('🎤 Speech recognition started');
         this.speechStartTime = Date.now();
         this.isListening = true;
         this.listeningActive = true;
+        this.lastTranscript = '';
         this.updateUIState();
         this.startVisualizer();
       };
@@ -247,16 +249,19 @@
         this.isListening = false;
         this.stopVisualizer();
         this.updateUIState();
+        // Auto-restart if still listening
+        if (this.listeningActive && !this.isProcessing) {
+          try {
+            this.recognition.start();
+          } catch (e) {}
+        }
       };
 
       this.recognition.onresult = (event) => {
-        console.log('🎤 Result received', { isFinal: event.results[event.results.length - 1].isFinal });
         let transcript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           transcript += event.results[i][0].transcript;
         }
-
-        console.log('🎤 Transcript:', transcript);
 
         const inputEl = this.shadowRoot.getElementById('chat-input');
         if (inputEl) inputEl.value = transcript;
@@ -264,50 +269,48 @@
         // Clear existing silence timeout
         if (this.silenceTimeout) clearTimeout(this.silenceTimeout);
         
+        // If we have speech content, set timeout to stop listening after silence
         if (transcript.trim()) {
           this.lastSpeechTime = Date.now();
-        }
-
-        if (event.results[event.results.length - 1].isFinal && transcript.trim()) {
-          // Check minimum speech duration (filter out noise)
-          const speechDuration = Date.now() - this.speechStartTime;
-          const meetsMinimumDuration = speechDuration >= this.minSpeechDuration;
+          this.lastTranscript = transcript;
           
-          // Check minimum transcript length (filter out stray noise)
-          const meetsMinimumLength = transcript.trim().length >= this.minTranscriptLength;
-          
-          console.log('🎤 Speech validation:', { 
-            speechDuration, 
-            meetsMinimumDuration, 
-            transcriptLength: transcript.trim().length, 
-            meetsMinimumLength 
-          });
-
-          // Only process if meets both criteria
-          if (meetsMinimumDuration && meetsMinimumLength) {
-            this.isListening = false;
-            this.stopVisualizer();
-            this.isProcessing = true;
-            try {
-              this.recognition.stop();
-            } catch (e) {}
-            this.updateUIState();
-            this.handleUserMessage(transcript);
-          } else {
-            // Noise detected, restart listening
-            console.log('🎤 Noise filtered, restarting listening...');
-            if (inputEl) inputEl.value = '';
-            try {
-              this.recognition.stop();
-            } catch (e) {}
-            setTimeout(() => {
-              if (this.listeningActive) {
+          // Set timeout to stop listening after short silence (100ms)
+          this.silenceTimeout = setTimeout(() => {
+            if (this.listeningActive && transcript.trim()) {
+              // Check minimum speech duration
+              const speechDuration = Date.now() - this.speechStartTime;
+              const meetsMinimumDuration = speechDuration >= this.minSpeechDuration;
+              const meetsMinimumLength = transcript.trim().length >= this.minTranscriptLength;
+              
+              console.log('🎤 Silence detected, stopping listen. Duration:', speechDuration, 'Valid:', meetsMinimumDuration && meetsMinimumLength);
+              
+              if (meetsMinimumDuration && meetsMinimumLength) {
+                this.isListening = false;
+                this.stopVisualizer();
+                this.isProcessing = true;
+                this.listeningActive = false;
                 try {
-                  this.recognition.start();
+                  this.recognition.stop();
                 } catch (e) {}
+                this.updateUIState();
+                this.handleUserMessage(transcript);
+              } else {
+                // Noise detected, restart
+                if (inputEl) inputEl.value = '';
+                try {
+                  this.recognition.stop();
+                } catch (e) {}
+                setTimeout(() => {
+                  if (this.listeningActive) {
+                    this.lastTranscript = '';
+                    try {
+                      this.recognition.start();
+                    } catch (e) {}
+                  }
+                }, 50);
               }
-            }, 100);
-          }
+            }
+          }, 100); // 100ms silence threshold
         }
       };
 
