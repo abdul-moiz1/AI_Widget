@@ -75,7 +75,7 @@
       this.lastSpeechTime = 0;
       this.audioElement = null; // For playing Eleven Labs audio
       this.speechStartTime = 0;
-      this.silenceDuration = 400; // 400ms of silence to stop listening (reduced from 800ms)
+      this.silenceDuration = 150; // 150ms of silence to stop listening (faster response)
       this.minSpeechDuration = 200; // Minimum 200ms of speech to process (filter noise)
       this.minTranscriptLength = 2; // Minimum character length to process
       
