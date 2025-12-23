@@ -2,11 +2,15 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { generateVoice, getAvailableVoices, type VoiceRequest } from "./voice";
 import { registerClientRoutes } from "./client-routes";
+import { registerAuthRoutes } from "./auth-routes";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Register authentication routes
+  registerAuthRoutes(app);
+  
   // Register client-facing routes
   registerClientRoutes(app);
   // Firebase configuration endpoint for admin dashboard

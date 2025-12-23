@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, LogOut, Mic } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import WidgetEditor from "@/components/widget-editor";
 import LiveWidgetPreview from "@/components/live-widget-preview";
@@ -31,8 +32,10 @@ interface BusinessData {
 }
 
 export default function ClientPage() {
+  const [, setLocation] = useLocation();
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [businessName, setBusinessName] = useState<string>("");
 
   // Get current user's business ID from auth token
   useEffect(() => {
@@ -53,6 +56,7 @@ export default function ClientPage() {
 
         const data = await response.json();
         setBusinessId(data.businessId);
+        setBusinessName(data.businessName || "Your Business");
       } catch (error) {
         setAuthError("Failed to load your business information.");
         console.error(error);
@@ -97,6 +101,18 @@ export default function ClientPage() {
     },
   });
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+    setLocation("/client-login");
+  };
+
   if (authError) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -109,8 +125,8 @@ export default function ClientPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">{authError}</p>
-            <Button className="mt-4 w-full" onClick={() => window.location.href = "/"}>
-              Return to Home
+            <Button className="mt-4 w-full" onClick={() => setLocation("/client-login")}>
+              Back to Login
             </Button>
           </CardContent>
         </Card>
@@ -157,12 +173,28 @@ export default function ClientPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header with Logout */}
+      <div className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4 max-w-6xl flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center text-background">
+              <Mic className="w-4 h-4" />
+            </div>
+            <span className="font-bold text-lg">VocalAI</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleLogout} data-testid="button-client-logout">
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Widget Manager</h1>
           <p className="text-muted-foreground mt-2">
-            Customize and manage your AI voice widget
+            Customize and manage your AI voice widget for {businessName}
           </p>
         </div>
 

@@ -44,7 +44,12 @@ export default function Home() {
           <a href="#integration" className="text-muted-foreground hover:text-primary transition-colors">Integration</a>
           <a href="#pricing" className="text-muted-foreground hover:text-primary transition-colors">Pricing</a>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          <a href="/client-login">
+            <Button variant="outline" size="sm" className="text-xs border-white/20">
+              Client
+            </Button>
+          </a>
           <a href="/admin">
             <Button variant="outline" size="sm" className="text-xs border-white/20">
               Admin

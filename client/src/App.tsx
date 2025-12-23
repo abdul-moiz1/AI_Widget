@@ -12,6 +12,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import Conversations from "@/pages/admin/conversations";
 import AdminSettings from "@/pages/admin/settings";
 import ClientPage from "@/pages/client";
+import ClientLogin from "@/pages/client-login";
 import { AppSidebar } from "@/components/app-sidebar";
 
 function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -39,7 +40,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       
-      {/* Client Route */}
+      {/* Client Routes */}
+      <Route path="/client-login" component={ClientLogin} />
       <Route path="/client" component={ClientPage} />
       
       {/* Admin Routes */}
