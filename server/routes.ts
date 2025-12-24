@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { generateVoice, getAvailableVoices, type VoiceRequest } from "./voice";
 import { registerClientRoutes } from "./client-routes";
 import { registerAuthRoutes } from "./auth-routes";
+import { registerWidgetRoutes } from "./widget-routes";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -10,6 +11,9 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Register authentication routes
   registerAuthRoutes(app);
+  
+  // Register widget distribution routes
+  registerWidgetRoutes(app);
   
   // Register client-facing routes
   registerClientRoutes(app);
