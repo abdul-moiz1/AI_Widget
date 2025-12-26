@@ -64,9 +64,9 @@ class AIVoiceWidget extends HTMLElement {
     this.minTranscriptLength = 2; // Minimum character length to process
 
     // Business configuration
-    this.businessId = window.AIVoiceWidgetConfig?.businessId;
+    this.businessId = window.AIVoiceWidgetConfig?.businessId || "rhplHrWnwFWb9WQaRo5H";
     this.businessConfig = null;
-    this.businessName = "AI Chat";
+    this.businessName = "ForceNT";
     this.logoUrl = null;
     this.voiceSettings = {
       language: "en",
