@@ -66,7 +66,7 @@ class AIVoiceWidget extends HTMLElement {
     this.minTranscriptLength = 2; // Minimum character length to process
 
     // Business configuration
-    this.businessId = window.AIVoiceWidgetConfig?.businessId || "biz_mjckz7s0fgwnqbcxu";
+    this.businessId = window.AIVoiceWidgetConfig?.businessId;
     this.businessConfig = null;
     this.businessName = "AI Chat";
     this.logoUrl = null;
@@ -480,8 +480,13 @@ class AIVoiceWidget extends HTMLElement {
         style,
       });
 
+      // Use absolute URL for voice backend
+      const voiceUrl = CONFIG.voiceBackendUrl.startsWith('http') 
+        ? CONFIG.voiceBackendUrl 
+        : `${window.location.origin}${CONFIG.voiceBackendUrl}`;
+
       // Fetch audio from Eleven Labs via Replit backend
-      const response = await fetch(`${CONFIG.voiceBackendUrl}`, {
+      const response = await fetch(voiceUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -664,16 +669,21 @@ class AIVoiceWidget extends HTMLElement {
           businessId: this.businessId,
         };
 
+        // Use absolute URL for backend
+        const chatUrl = CONFIG.backendUrl.startsWith('http') 
+          ? CONFIG.backendUrl 
+          : `${window.location.origin}${CONFIG.backendUrl}`;
+
         console.log("🚀 Sending to backend:", {
           sessionId: this.sessionId,
           message: text,
           businessId: this.businessId,
-          backendUrl: CONFIG.backendUrl,
+          backendUrl: chatUrl,
           bufferSize: recentMessages.length,
           recentMessages: recentMessages,
         });
 
-        const res = await fetch(CONFIG.backendUrl, {
+        const res = await fetch(chatUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
