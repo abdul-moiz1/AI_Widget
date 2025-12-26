@@ -112,10 +112,17 @@ class AIVoiceWidget extends HTMLElement {
         `;
       document.head.appendChild(script);
 
-      // Fetch Firebase config from server
-      const response = await fetch("/api/firebase-config");
-      if (!response.ok) throw new Error("Failed to fetch Firebase config");
-      const firebaseConfig = await response.json();
+      // Talkserve project config
+      const firebaseConfig = {
+        projectId: "talkserve",
+        apiKey: "AIzaSyB9MsiSMjE9U7jI7I-mqfRQ2V1Opusdl2E", // Talkserve API Key
+        authDomain: "talkserve.firebaseapp.com",
+        storageBucket: "talkserve.appspot.com",
+        messagingSenderId: "331168170241", // Talkserve Sender ID
+        appId: "1:331168170241:web:96e94f9e3d939e08077184" // Talkserve App ID
+      };
+
+      console.log("🔍 Attempting to load business:", this.businessId);
 
       // Wait for Firebase to be loaded, then get business config
       let maxRetries = 20;
@@ -124,29 +131,43 @@ class AIVoiceWidget extends HTMLElement {
       }
 
       if (window.loadFirebaseConfig) {
-        const config = await window.loadFirebaseConfig(
-          firebaseConfig.projectId,
-          firebaseConfig.apiKey,
-          firebaseConfig.authDomain,
-          firebaseConfig.storageBucket,
-          firebaseConfig.messagingSenderId,
-          firebaseConfig.appId,
-          this.businessId,
-        );
+        try {
+          const config = await window.loadFirebaseConfig(
+            firebaseConfig.projectId,
+            firebaseConfig.apiKey,
+            firebaseConfig.authDomain,
+            firebaseConfig.storageBucket,
+            firebaseConfig.messagingSenderId,
+            firebaseConfig.appId,
+            this.businessId,
+          );
 
-        if (config) {
-          this.businessConfig = config;
-          this.businessName = config.businessName || "AI Chat";
-          this.logoUrl = config.widget?.logoUrl;
-          if (config.voice) {
-            this.voiceSettings = { ...this.voiceSettings, ...config.voice };
+          if (config) {
+            this.businessConfig = config;
+            this.businessName = config.businessName || "ForceNT";
+            this.logoUrl = config.widget?.logoUrl;
+            if (config.voice) {
+              this.voiceSettings = { ...this.voiceSettings, ...config.voice };
+            }
+            if (config.widget?.theme?.primaryColor) {
+              CONFIG.theme.primary = config.widget.theme.primaryColor;
+            }
+            console.log("✅ Business config loaded from Talkserve:", config);
+          } else {
+            console.warn("⚠️ Document not found in Talkserve, using ForceNT defaults");
+            this.businessName = "ForceNT";
+            this.businessConfig = {
+              businessName: "ForceNT",
+              context: {
+                description: "ForceNT is a business growth technology company that helps professional services, e-commerce, SaaS, and agency businesses scale smarter."
+              }
+            };
+            this.render(); // Ensure UI updates with defaults
           }
-          if (config.widget?.theme?.primaryColor) {
-            CONFIG.theme.primary = config.widget.theme.primaryColor;
-          }
-          console.log("✅ Business config loaded:", config);
-        } else {
-          console.error("Business not found");
+        } catch (loadErr) {
+          console.error("❌ Failed to call loadFirebaseConfig:", loadErr);
+          this.businessName = "ForceNT";
+          this.render();
         }
       }
     } catch (error) {
