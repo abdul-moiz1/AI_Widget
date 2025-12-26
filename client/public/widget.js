@@ -23,7 +23,7 @@
 let voiceBackendUrl = "https://generatevoice-ieskeqprjq-uc.a.run.app";
 
 const CONFIG = {
-  backendUrl: "https://chat-ieskeqprjq-uc.a.run.app", // Firebase Cloud Function endpoint for chat
+  backendUrl: "/api/chat", // Use local backend endpoint
   voiceBackendUrl: voiceBackendUrl,
   theme: {
     primary: "#00e5ff",
@@ -66,7 +66,7 @@ class AIVoiceWidget extends HTMLElement {
     this.minTranscriptLength = 2; // Minimum character length to process
 
     // Business configuration
-    this.businessId = window.AIVoiceWidgetConfig?.businessId;
+    this.businessId = window.AIVoiceWidgetConfig?.businessId || "biz_mjckz7s0fgwnqbcxu";
     this.businessConfig = null;
     this.businessName = "AI Chat";
     this.logoUrl = null;
