@@ -20,11 +20,9 @@
  * - No API keys exposed in frontend (all backend-handled)
  */
 
-let voiceBackendUrl = "https://generatevoice-ieskeqprjq-uc.a.run.app";
-
 const CONFIG = {
-  backendUrl: "/api/chat", // Use local backend endpoint
-  voiceBackendUrl: voiceBackendUrl,
+  backendUrl: "https://chat-ieskeqprjq-uc.a.run.app", // Connected to external chat endpoint
+  voiceBackendUrl: "https://generatevoice-ieskeqprjq-uc.a.run.app", // ElevenLabs voice service endpoint
   theme: {
     primary: "#00e5ff",
     secondary: "#2d3748",
