@@ -120,9 +120,9 @@ class AIVoiceWidget extends HTMLElement {
             this.lastTranscript = transcript;
             console.log("Transcript found:", transcript);
             
-            // Immediately update the status to show what was heard
+            // Immediately update the status to show what was heard in real-time
             const status = this.shadowRoot.getElementById("voice-status");
-            if (status) status.textContent = ` Heard: "${transcript}"`;
+            if (status) status.textContent = transcript;
           }
         };
         
@@ -171,6 +171,10 @@ class AIVoiceWidget extends HTMLElement {
         onVADMisfire: () => {
           this.isListening = false;
           this.updateUIState();
+          // Restart loop if it misfires and we're still in voice mode
+          if (this.isOpen && this.isVoiceMode && !this.isSpeaking && !this.isProcessing) {
+             this.setupVAD();
+          }
         },
         onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
         baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
@@ -327,9 +331,13 @@ class AIVoiceWidget extends HTMLElement {
       this.audioElement.onended = async () => {
         this.isSpeaking = false;
         this.updateUIState();
-        // Resume VAD after speaking finishes
+        // Resume VAD after speaking finishes for continuous loop
         if (this.vad && this.isOpen && this.isVoiceMode) {
-          try { await this.vad.start(); } catch(e) {}
+          try { 
+            await this.vad.start(); 
+            this.isListening = true;
+            this.updateUIState();
+          } catch(e) {}
         }
       };
       await this.audioElement.play();
@@ -370,8 +378,10 @@ class AIVoiceWidget extends HTMLElement {
         } else if (this.isListening || this.isSpeaking) {
           if (this.dataArray && this.analyser) {
             this.analyser.getByteFrequencyData(this.dataArray);
-            const value = this.dataArray[i * 2] || 0;
-            height = (value / 5) + 4;
+            // Use frequency data to drive bar height
+            const segment = Math.floor(this.dataArray.length / bars);
+            const value = this.dataArray[i * segment] || 0;
+            height = (value / 4) + 6;
           }
           ctx.globalAlpha = 1;
         } else {
