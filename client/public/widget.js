@@ -112,18 +112,35 @@ class AIVoiceWidget extends HTMLElement {
         this.recognition.lang = this.voiceSettings.language || 'en-US';
 
         this.recognition.onresult = (event) => {
-          let fullTranscript = "";
-          // Use resultIndex to handle continuous results properly
-          for (let i = 0; i < event.results.length; ++i) {
-            fullTranscript += event.results[i][0].transcript;
+          let interimTranscript = "";
+          let finalTranscript = "";
+
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
           }
+
+          // Combined transcript for storage
+          const combined = (this.finalTranscriptBase || "") + finalTranscript + interimTranscript;
           
-          if (fullTranscript) {
-            this.lastTranscript = fullTranscript.trim();
-            console.log("Transcript updated:", this.lastTranscript);
+          if (combined) {
+            this.lastTranscript = combined.trim();
             
+            // Live update the UI
             const status = this.shadowRoot.getElementById("voice-status");
-            if (status) status.textContent = this.lastTranscript;
+            if (status) {
+              status.textContent = this.lastTranscript;
+              // Ensure the text is visible and perhaps style it slightly differently if interim
+              status.style.opacity = interimTranscript ? "0.7" : "1";
+            }
+          }
+
+          // If we got new final results, update the base
+          if (finalTranscript) {
+            this.finalTranscriptBase = (this.finalTranscriptBase || "") + finalTranscript;
           }
         };
 
@@ -149,10 +166,10 @@ class AIVoiceWidget extends HTMLElement {
         onSpeechStart: () => {
           if (this.isSpeaking) this.stopAIPlayback();
           this.isListening = true;
-          this.lastTranscript = ""; // Reset transcript on new speech
+          this.lastTranscript = ""; 
+          this.finalTranscriptBase = ""; // Reset base
           this.updateUIState();
           
-          // Restart recognition if it's not running
           if (this.recognition) {
             try {
               this.recognition.start();
