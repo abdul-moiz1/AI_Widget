@@ -178,6 +178,9 @@ class AIVoiceWidget extends HTMLElement {
     this.isProcessing = true;
     this.updateUIState();
     
+    // Fallback: If no transcript, use a default prompt to trigger a real response
+    const finalMessage = transcript?.trim() || "";
+
     try {
       const res = await fetch(CONFIG.backendUrl, {
         method: "POST",
@@ -185,17 +188,18 @@ class AIVoiceWidget extends HTMLElement {
         body: JSON.stringify({
           sessionId: this.sessionId,
           businessId: this.businessId,
-          message: transcript || "", // Pass transcription if available
+          message: finalMessage, 
           recentMessages: this.conversationBuffer,
           voiceRequest: true 
         }),
       });
       const data = await res.json();
       
-      const userText = transcript || data.transcription;
+      const userText = finalMessage || data.transcription;
       if (userText) {
         this.messages.push({ role: "user", text: userText });
         this.conversationBuffer.push({ role: "user", text: userText });
+        if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
       }
 
       const reply = data.reply || data.message || "I'm sorry, I didn't catch that.";
@@ -207,6 +211,12 @@ class AIVoiceWidget extends HTMLElement {
         
         this.renderMessages();
         await this.speak(reply);
+      } else if (!finalMessage) {
+        // If we got "I heard you" and had no transcript, it's likely a misfire or empty audio
+        const fallbackReply = "I'm sorry, I didn't catch that.";
+        this.messages.push({ role: "assistant", text: fallbackReply });
+        this.renderMessages();
+        await this.speak(fallbackReply);
       }
     } catch (e) {
       console.error("Processing Error:", e);
