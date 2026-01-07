@@ -78,17 +78,24 @@ class AIVoiceWidget extends HTMLElement {
 
     try {
       if (!window.vad) {
-        // Retry logic for script loading
         let attempts = 0;
-        while (!window.vad && attempts < 10) {
+        while (!window.vad && attempts < 20) {
           await new Promise(r => setTimeout(r, 500));
           attempts++;
         }
         if (!window.vad) throw new Error("VAD library timeout");
       }
       
+      // Ensure AudioContext is created/resumed on user interaction
       if (!this.audioContext) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+
+      if (!this.analyser) {
         this.analyser = this.audioContext.createAnalyser();
         this.analyser.fftSize = 256;
         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
@@ -114,7 +121,7 @@ class AIVoiceWidget extends HTMLElement {
     } catch (e) {
       console.error("VAD Setup Error:", e);
       const status = this.shadowRoot.getElementById("voice-status");
-      if (status) status.textContent = "Voice error. Refreshing...";
+      if (status) status.textContent = "Mic access denied or error";
     }
   }
 
@@ -163,7 +170,10 @@ class AIVoiceWidget extends HTMLElement {
       });
       const audioBlob = await res.blob();
       const url = URL.createObjectURL(audioBlob);
-      if (!this.audioElement) this.audioElement = new Audio();
+      if (!this.audioElement) {
+        this.audioElement = new Audio();
+        this.audioElement.crossOrigin = "anonymous";
+      }
       this.audioElement.src = url;
       
       if (!this.audioSource) {
@@ -208,9 +218,11 @@ class AIVoiceWidget extends HTMLElement {
           height = 8 + Math.sin(Date.now() / 150 + i) * 4;
           ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 200) * 0.2;
         } else if (this.isListening || this.isSpeaking) {
-          this.analyser?.getByteFrequencyData(this.dataArray);
-          const value = this.dataArray[i * 2] || 0;
-          height = (value / 5) + 4;
+          if (this.dataArray) {
+            this.analyser.getByteFrequencyData(this.dataArray);
+            const value = this.dataArray[i * 2] || 0;
+            height = (value / 5) + 4;
+          }
           ctx.globalAlpha = 1;
         } else {
           height = 4;
@@ -240,14 +252,16 @@ class AIVoiceWidget extends HTMLElement {
     ctx.closePath();
   }
 
-  toggleChat() {
+  async toggleChat() {
     this.isOpen = !this.isOpen;
     this.render();
     if (this.isOpen) {
-      this.setupVAD();
+      await this.setupVAD();
       this.startVisualizer();
     } else {
-      if (this.vad) this.vad.pause();
+      if (this.vad) {
+        try { await this.vad.pause(); } catch(e) {}
+      }
       if (this.animationId) cancelAnimationFrame(this.animationId);
       this.stopAIPlayback();
     }
