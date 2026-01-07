@@ -282,74 +282,147 @@ class AIVoiceWidget extends HTMLElement {
           --bg: ${CONFIG.theme.background};
           --text: ${CONFIG.theme.text};
           position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-          font-family: system-ui, -apple-system, sans-serif;
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
         .widget-container {
           position: fixed; bottom: 90px; right: 24px;
-          width: 360px; height: 600px;
+          width: 380px; height: 600px;
           max-height: calc(100vh - 120px);
-          background: var(--bg); border-radius: 24px;
+          background: rgba(26, 32, 44, 0.8);
+          backdrop-filter: blur(16px) saturate(180%);
+          -webkit-backdrop-filter: blur(16px) saturate(180%);
+          border-radius: 28px;
           display: flex; flex-direction: column; overflow: hidden;
-          box-shadow: 0 12px 48px rgba(0,0,0,0.4);
-          opacity: 0; transform: translateY(20px) scale(0.95); pointer-events: none;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1);
+          opacity: 0; transform: translateY(30px) scale(0.95); pointer-events: none;
+          transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
         .widget-container.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
 
         @media (max-width: 480px) {
-          :host {
-            bottom: 0; right: 0;
-            width: 100%; height: 100%;
-          }
+          :host { bottom: 0; right: 0; width: 100%; height: 100%; }
           .widget-container {
-            width: 100%; height: 100%;
-            max-height: 100%;
-            bottom: 0; right: 0;
-            border-radius: 0;
+            width: 100%; height: 100%; max-height: 100%;
+            bottom: 0; right: 0; border-radius: 0;
+            background: var(--bg);
           }
-          .toggle-btn {
-            bottom: 20px; right: 20px;
-            position: fixed;
-            z-index: 10000;
-          }
-          .toggle-btn.open {
-            opacity: 0;
-            pointer-events: none;
-          }
+          .toggle-btn { bottom: 20px; right: 20px; position: fixed; z-index: 10000; }
+          .toggle-btn.open { opacity: 0; pointer-events: none; }
         }
-        .header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; }
-        .header-title { font-weight: 600; color: var(--text); font-size: 15px; }
-        .mode-btn { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; padding: 4px; display: flex; }
-        .mode-btn:hover { color: var(--primary); }
+
+        .header { 
+          padding: 20px 24px; 
+          background: linear-gradient(to bottom, rgba(255,255,255,0.05), transparent);
+          border-bottom: 1px solid rgba(255,255,255,0.08); 
+          display: flex; align-items: center; justify-content: space-between; 
+        }
+        .header-title { 
+          font-weight: 700; color: var(--text); font-size: 16px; 
+          letter-spacing: -0.02em;
+          background: linear-gradient(45deg, #fff, var(--primary));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .mode-btn { 
+          background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
+          color: rgba(255,255,255,0.8); cursor: pointer; padding: 8px; 
+          display: flex; border-radius: 12px; transition: 0.2s;
+        }
+        .mode-btn:hover { background: rgba(255,255,255,0.1); color: var(--primary); transform: translateY(-1px); }
+        
         .content { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .voice-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; }
-        .mic-wrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; }
-        #waveform { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        .voice-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+        .mic-wrap { 
+          position: relative; width: 180px; height: 180px; 
+          display: flex; align-items: center; justify-content: center; 
+        }
+        #waveform { 
+          position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+          filter: drop-shadow(0 0 15px var(--primary));
+        }
         .voice-mic-btn {
-          width: 80px; height: 80px; border-radius: 50%; border: none;
-          background: var(--primary); color: #000; cursor: pointer;
+          width: 90px; height: 90px; border-radius: 50%; border: none;
+          background: linear-gradient(135deg, var(--primary), #00b8d4); 
+          color: #000; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          transition: 0.3s; z-index: 2;
+          transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+          z-index: 2;
+          box-shadow: 0 10px 25px rgba(0, 229, 255, 0.3);
         }
-        .voice-mic-btn.listening { background: #ff4b4b; color: #fff; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,75,75,0.4); } 70% { box-shadow: 0 0 0 20px rgba(255,75,75,0); } 100% { box-shadow: 0 0 0 0 rgba(255,75,75,0); } }
-        #voice-status { font-size: 14px; color: rgba(255,255,255,0.7); font-weight: 500; }
-        .text-view { flex: 1; display: flex; flex-direction: column; padding: 16px; gap: 12px; }
-        #messages-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; }
-        .message { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.4; }
-        .message.user { align-self: flex-end; background: var(--primary); color: #000; }
-        .message.assistant { align-self: flex-start; background: rgba(255,255,255,0.08); color: #fff; }
-        .input-wrap { display: flex; gap: 8px; align-items: center; }
-        #chat-input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px; color: #fff; outline: none; font-size: 14px; }
-        .send-btn { background: var(--primary); border: none; border-radius: 10px; padding: 8px 12px; color: #000; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .voice-mic-btn:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(0, 229, 255, 0.4); }
+        .voice-mic-btn.listening { 
+          background: linear-gradient(135deg, #ff4b4b, #ff1744); 
+          color: #fff; animation: pulse-glow 2s infinite; 
+        }
+        @keyframes pulse-glow { 
+          0% { box-shadow: 0 0 0 0 rgba(255,75,75,0.5); transform: scale(1); } 
+          50% { transform: scale(1.1); }
+          70% { box-shadow: 0 0 0 30px rgba(255,75,75,0); } 
+          100% { box-shadow: 0 0 0 0 rgba(255,75,75,0); transform: scale(1); } 
+        }
+        #voice-status { 
+          font-size: 15px; color: rgba(255,255,255,0.9); font-weight: 600; 
+          letter-spacing: 0.05em; text-transform: uppercase;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .text-view { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 16px; }
+        #messages-container { 
+          flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; 
+          padding-right: 8px;
+        }
+        #messages-container::-webkit-scrollbar { width: 4px; }
+        #messages-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .message { 
+          max-width: 85%; padding: 12px 18px; border-radius: 20px; font-size: 14.5px; 
+          line-height: 1.5; position: relative;
+          animation: slide-in 0.3s ease-out;
+        }
+        @keyframes slide-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .message.user { 
+          align-self: flex-end; 
+          background: linear-gradient(135deg, var(--primary), #00b8d4);
+          color: #000; font-weight: 500;
+          border-bottom-right-radius: 4px;
+          box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
+        }
+        .message.assistant { 
+          align-self: flex-start; 
+          background: rgba(255,255,255,0.06); 
+          backdrop-filter: blur(5px);
+          color: #fff; border-bottom-left-radius: 4px;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .input-wrap { 
+          display: flex; gap: 10px; align-items: center; 
+          background: rgba(255,255,255,0.03); padding: 6px; border-radius: 18px;
+          border: 1px solid rgba(255,255,255,0.05);
+        }
+        #chat-input { 
+          flex: 1; background: transparent; border: none;
+          padding: 10px 14px; color: #fff; outline: none; font-size: 14px; 
+        }
+        .send-btn { 
+          background: var(--primary); border: none; border-radius: 14px; 
+          width: 40px; height: 40px; color: #000; cursor: pointer; 
+          display: flex; align-items: center; justify-content: center;
+          transition: 0.2s;
+        }
+        .send-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+        
         .toggle-btn {
-          width: 56px; height: 56px; border-radius: 50%; background: var(--primary);
+          width: 64px; height: 64px; border-radius: 20px; 
+          background: linear-gradient(135deg, var(--primary), #00b8d4);
           color: #000; display: flex; align-items: center; justify-content: center;
-          cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: 0.3s;
+          cursor: pointer; box-shadow: 0 8px 30px rgba(0, 229, 255, 0.4); 
+          transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
         }
-        .toggle-btn:hover { transform: scale(1.05); }
-        .toggle-btn.open { transform: rotate(90deg); }
+        .toggle-btn:hover { transform: translateY(-4px) rotate(5deg); box-shadow: 0 12px 40px rgba(0, 229, 255, 0.5); }
+        .toggle-btn.open { transform: scale(0.8) rotate(90deg); opacity: 0.8; }
       </style>
       <div class="widget-container">
         <div class="header">
@@ -374,7 +447,9 @@ class AIVoiceWidget extends HTMLElement {
               <div id="messages-container"></div>
               <div class="input-wrap">
                 <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
-                <button class="send-btn" id="send-btn">Send</button>
+                <button class="send-btn" id="send-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
               </div>
             </div>
           `}
