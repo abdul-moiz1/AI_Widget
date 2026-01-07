@@ -149,6 +149,9 @@ class AIVoiceWidget extends HTMLElement {
   async processAudio(audioFloat32) {
     this.isProcessing = true;
     this.updateUIState();
+    
+    // In a production app, audioFloat32 would be sent for STT.
+    // For this flow, we notify the user we are processing.
     try {
       const res = await fetch(CONFIG.backendUrl, {
         method: "POST",
@@ -156,17 +159,33 @@ class AIVoiceWidget extends HTMLElement {
         body: JSON.stringify({
           sessionId: this.sessionId,
           businessId: this.businessId,
-          recentMessages: this.conversationBuffer
+          recentMessages: this.conversationBuffer,
+          // Sending audio as data or identifying it as a voice request
+          voiceRequest: true 
         }),
       });
       const data = await res.json();
-      const reply = data.reply || data.message || "I heard you.";
       
-      this.messages.push({ role: "assistant", text: reply });
-      this.conversationBuffer.push({ role: "assistant", text: reply });
-      if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
+      // Handle transcription if backend returns it
+      if (data.transcription) {
+        this.messages.push({ role: "user", text: data.transcription });
+        this.conversationBuffer.push({ role: "user", text: data.transcription });
+      }
+
+      const reply = data.reply || data.message || "I'm sorry, I didn't catch that.";
       
-      await this.speak(reply);
+      // Only push to messages if it's not a generic placeholder
+      if (reply !== "I heard you.") {
+        this.messages.push({ role: "assistant", text: reply });
+        this.conversationBuffer.push({ role: "assistant", text: reply });
+        if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
+        
+        this.renderMessages();
+        await this.speak(reply);
+      } else {
+        // If it's a placeholder, try to get a real response or fallback
+        console.warn("Received placeholder response");
+      }
     } catch (e) {
       console.error("Processing Error:", e);
     } finally {
@@ -205,7 +224,6 @@ class AIVoiceWidget extends HTMLElement {
       if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
       
       this.renderMessages();
-      // Added speaking for text messages too
       await this.speak(reply);
     } catch (e) {
       this.messages.push({ role: "assistant", text: "Connection error. Please try again." });
