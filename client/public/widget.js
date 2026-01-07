@@ -113,16 +113,26 @@ class AIVoiceWidget extends HTMLElement {
 
         this.recognition.onresult = (event) => {
           let fullTranscript = "";
-          // Correctly iterate through all results to get the full sentence
+          // Use resultIndex to handle continuous results properly
           for (let i = 0; i < event.results.length; ++i) {
             fullTranscript += event.results[i][0].transcript;
           }
+          
           if (fullTranscript) {
             this.lastTranscript = fullTranscript.trim();
             console.log("Transcript updated:", this.lastTranscript);
             
             const status = this.shadowRoot.getElementById("voice-status");
             if (status) status.textContent = this.lastTranscript;
+          }
+        };
+
+        // Handle recognition errors to prevent loop hangs
+        this.recognition.onerror = (event) => {
+          console.error("Recognition Error:", event.error);
+          if (event.error === 'not-allowed') {
+            const status = this.shadowRoot.getElementById("voice-status");
+            if (status) status.textContent = "Mic access denied";
           }
         };
         
@@ -142,34 +152,43 @@ class AIVoiceWidget extends HTMLElement {
           this.lastTranscript = ""; // Reset transcript on new speech
           this.updateUIState();
           
-          // Ensure recognition is running when speech starts
+          // Restart recognition if it's not running
           if (this.recognition) {
             try {
               this.recognition.start();
-            } catch (e) {
-              // Recognition might already be started, which is fine
-            }
+            } catch (e) {}
           }
         },
         onSpeechEnd: (audio) => {
           this.isListening = true; 
           this.updateUIState();
           
-          // Wait a bit longer for the recognition to process the tail end of the speech
+          // Wait longer for the final transcript to arrive
+          // VAD usually detects end of speech faster than Speech API
           setTimeout(() => {
-            if (this.recognition) {
-              try {
-                this.recognition.stop();
-              } catch (e) {}
-            }
+            // Check if we still have a very short transcript, maybe wait a bit more
+            const finalWait = this.lastTranscript.length < 10 ? 1500 : 800;
             
-            // Further delay to ensure onresult has fired after stop()
             setTimeout(() => {
-              this.isListening = false;
-              console.log("Processing with final transcript:", this.lastTranscript);
-              this.processAudio(audio, this.lastTranscript);
-            }, 500);
-          }, 500);
+              if (this.recognition) {
+                try {
+                  this.recognition.stop();
+                } catch (e) {}
+              }
+              
+              // Final check before processing
+              setTimeout(() => {
+                this.isListening = false;
+                console.log("Processing with final transcript:", this.lastTranscript);
+                if (this.lastTranscript) {
+                  this.processAudio(audio, this.lastTranscript);
+                } else {
+                  // If still empty after long wait, it's a catch failure
+                  this.processAudio(audio, "");
+                }
+              }, 300);
+            }, finalWait);
+          }, 200);
         },
         onVADMisfire: () => {
           this.isListening = false;
