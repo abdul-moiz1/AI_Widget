@@ -349,13 +349,3 @@ if (!customElements.get("ai-voice-widget")) {
   customElements.define("ai-voice-widget", AIVoiceWidget);
   document.body.appendChild(document.createElement("ai-voice-widget"));
 }
-
-if (!customElements.get("ai-voice-widget")) {
-  customElements.define("ai-voice-widget", AIVoiceWidget);
-  document.body.appendChild(document.createElement("ai-voice-widget"));
-}
-
-if (!customElements.get("ai-voice-widget")) {
-  customElements.define("ai-voice-widget", AIVoiceWidget);
-  document.body.appendChild(document.createElement("ai-voice-widget"));
-}
