@@ -100,7 +100,6 @@ class AIVoiceWidget extends HTMLElement {
     this.recognition.onstart = () => {
       this.isListening = true;
       this.updateUIState();
-      this.startVisualizer();
     };
 
     this.recognition.onend = () => {
@@ -137,21 +136,57 @@ class AIVoiceWidget extends HTMLElement {
     const canvas = this.shadowRoot.getElementById("waveform");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
+    
     const draw = () => {
-      if (!this.isListening && !this.isSpeaking) return;
+      if (!this.isOpen || !this.isVoiceMode) return;
       this.animationId = requestAnimationFrame(draw);
-      this.analyser?.getByteFrequencyData(this.dataArray);
+      
+      const bars = 5;
+      const barWidth = 6;
+      const gap = 4;
+      const totalWidth = (barWidth + gap) * bars - gap;
+      let startX = (canvas.width - totalWidth) / 2;
+      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = CONFIG.theme.primary;
-      const barWidth = (canvas.width / this.dataArray.length) * 2.5;
-      let x = 0;
-      for (let i = 0; i < this.dataArray.length; i++) {
-        const barHeight = this.dataArray[i] / 2;
-        ctx.fillRect(x, canvas.height / 2 - barHeight / 2, barWidth, barHeight);
-        x += barWidth + 1;
+      
+      for (let i = 0; i < bars; i++) {
+        let height = 4;
+        if (this.isProcessing) {
+          height = 8 + Math.sin(Date.now() / 150 + i) * 4;
+          ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 200) * 0.2;
+        } else if (this.isListening || this.isSpeaking) {
+          this.analyser?.getByteFrequencyData(this.dataArray);
+          const segment = Math.floor(this.dataArray.length / bars);
+          const value = this.dataArray[i * segment] || 0;
+          height = this.isListening ? (value / 5) + 4 : (value / 3) + 6;
+          ctx.globalAlpha = 1;
+        } else {
+          height = 4;
+          ctx.globalAlpha = 0.3;
+        }
+        
+        const y = (canvas.height - height) / 2;
+        this.roundRect(ctx, startX, y, barWidth, height, barWidth / 2);
+        ctx.fill();
+        startX += barWidth + gap;
       }
     };
     draw();
+  }
+
+  roundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
   }
 
   stopVisualizer() {
@@ -164,7 +199,6 @@ class AIVoiceWidget extends HTMLElement {
     try { this.recognition.stop(); } catch (e) {}
     this.isSpeaking = true;
     this.updateUIState();
-    this.startVisualizer();
 
     try {
       const res = await fetch(CONFIG.voiceBackendUrl, {
@@ -250,8 +284,13 @@ class AIVoiceWidget extends HTMLElement {
   toggleChat() {
     this.isOpen = !this.isOpen;
     this.render();
-    if (this.isOpen && this.isVoiceMode) this.toggleListening();
-    else this.isListening = false;
+    if (this.isOpen) {
+      this.startVisualizer();
+      if (this.isVoiceMode) this.toggleListening();
+    } else {
+      this.stopVisualizer();
+      this.isListening = false;
+    }
   }
 
   toggleMode() {
@@ -263,9 +302,9 @@ class AIVoiceWidget extends HTMLElement {
   updateUIState() {
     const status = this.shadowRoot.getElementById("voice-status");
     if (status) {
-      if (this.isListening) status.textContent = "Listening...";
-      else if (this.isProcessing) status.textContent = "Thinking...";
+      if (this.isProcessing) status.textContent = "Thinking...";
       else if (this.isSpeaking) status.textContent = "Speaking...";
+      else if (this.isListening) status.textContent = "Listening...";
       else status.textContent = "Tap to speak";
     }
     const mic = this.shadowRoot.getElementById("voice-mic-btn");
