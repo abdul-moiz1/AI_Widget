@@ -343,13 +343,16 @@ class AIVoiceWidget extends HTMLElement {
 
     try {
       // Map gender settings to voice selection
-      // Note: The backend needs to handle these parameters
       const voiceParams = {
         text,
         language: this.voiceSettings.language,
+        voiceGender: this.voiceSettings.voiceGender, // Match what backend expects
         voice: this.voiceSettings.voiceGender === 'male' ? 'male' : 'female',
+        gender: this.voiceSettings.voiceGender === 'male' ? 'male' : 'female',
         style: this.voiceSettings.style
       };
+
+      console.log("SENDING VOICE PARAMS:", voiceParams);
 
       const res = await fetch(CONFIG.voiceBackendUrl, {
         method: "POST",
