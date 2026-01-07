@@ -296,6 +296,12 @@ class AIVoiceWidget extends HTMLElement {
 
     this.isSpeaking = true;
     this.updateUIState();
+
+    // Pause VAD while speaking to prevent self-interruption
+    if (this.vad) {
+      try { await this.vad.pause(); } catch(e) {}
+    }
+
     try {
       const res = await fetch(CONFIG.voiceBackendUrl, {
         method: "POST",
@@ -318,15 +324,23 @@ class AIVoiceWidget extends HTMLElement {
         }
       }
 
-      this.audioElement.onended = () => {
+      this.audioElement.onended = async () => {
         this.isSpeaking = false;
         this.updateUIState();
+        // Resume VAD after speaking finishes
+        if (this.vad && this.isOpen && this.isVoiceMode) {
+          try { await this.vad.start(); } catch(e) {}
+        }
       };
       await this.audioElement.play();
     } catch (e) {
       console.error("Speech Error:", e);
       this.isSpeaking = false;
       this.updateUIState();
+      // Resume VAD on error
+      if (this.vad && this.isOpen && this.isVoiceMode) {
+        try { await this.vad.start(); } catch(e) {}
+      }
     }
   }
 
