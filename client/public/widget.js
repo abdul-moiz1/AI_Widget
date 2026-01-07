@@ -113,16 +113,16 @@ class AIVoiceWidget extends HTMLElement {
 
         this.recognition.onresult = (event) => {
           let fullTranscript = "";
+          // Correctly iterate through all results to get the full sentence
           for (let i = 0; i < event.results.length; ++i) {
             fullTranscript += event.results[i][0].transcript;
           }
           if (fullTranscript) {
-            this.lastTranscript = fullTranscript;
-            console.log("Full transcript:", fullTranscript);
+            this.lastTranscript = fullTranscript.trim();
+            console.log("Transcript updated:", this.lastTranscript);
             
-            // Immediately update the status to show what was heard in real-time
             const status = this.shadowRoot.getElementById("voice-status");
-            if (status) status.textContent = fullTranscript;
+            if (status) status.textContent = this.lastTranscript;
           }
         };
         
@@ -152,21 +152,24 @@ class AIVoiceWidget extends HTMLElement {
           }
         },
         onSpeechEnd: (audio) => {
-          this.isListening = true; // Keep listening state true until processed
+          this.isListening = true; 
           this.updateUIState();
           
-          // Stop recognition to force a final result
-          if (this.recognition) {
-            try {
-              this.recognition.stop();
-            } catch (e) {}
-          }
-
-          // Small delay to allow speech recognition to finalize
+          // Wait a bit longer for the recognition to process the tail end of the speech
           setTimeout(() => {
-            this.isListening = false;
-            this.processAudio(audio, this.lastTranscript);
-          }, 800);
+            if (this.recognition) {
+              try {
+                this.recognition.stop();
+              } catch (e) {}
+            }
+            
+            // Further delay to ensure onresult has fired after stop()
+            setTimeout(() => {
+              this.isListening = false;
+              console.log("Processing with final transcript:", this.lastTranscript);
+              this.processAudio(audio, this.lastTranscript);
+            }, 500);
+          }, 500);
         },
         onVADMisfire: () => {
           this.isListening = false;
