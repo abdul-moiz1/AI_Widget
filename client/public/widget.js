@@ -369,6 +369,18 @@ class AIVoiceWidget extends HTMLElement {
       this.audioElement.onended = async () => {
         this.isSpeaking = false;
         this.updateUIState();
+        
+        // Ensure VAD is restarted and listening after the AI finishes speaking
+        if (this.vad && this.isOpen && this.isVoiceMode) {
+          try {
+            await this.vad.start();
+            this.isListening = true;
+            this.updateUIState();
+            console.log("VAD restarted after speech completion");
+          } catch (e) {
+            console.error("Failed to restart VAD after speech:", e);
+          }
+        }
       };
       await this.audioElement.play();
     } catch (e) {
