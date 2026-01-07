@@ -285,16 +285,39 @@ class AIVoiceWidget extends HTMLElement {
           font-family: system-ui, -apple-system, sans-serif;
         }
         .widget-container {
-          position: absolute; bottom: 80px; right: 0;
-          width: 360px; height: 540px;
-          background: var(--bg); border-radius: 20px;
+          position: fixed; bottom: 90px; right: 24px;
+          width: 360px; height: 600px;
+          max-height: calc(100vh - 120px);
+          background: var(--bg); border-radius: 24px;
           display: flex; flex-direction: column; overflow: hidden;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-          opacity: 0; transform: translateY(20px); pointer-events: none;
-          transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+          opacity: 0; transform: translateY(20px) scale(0.95); pointer-events: none;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           border: 1px solid rgba(255,255,255,0.1);
         }
-        .widget-container.open { opacity: 1; transform: translateY(0); pointer-events: all; }
+        .widget-container.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+
+        @media (max-width: 480px) {
+          :host {
+            bottom: 0; right: 0;
+            width: 100%; height: 100%;
+          }
+          .widget-container {
+            width: 100%; height: 100%;
+            max-height: 100%;
+            bottom: 0; right: 0;
+            border-radius: 0;
+          }
+          .toggle-btn {
+            bottom: 20px; right: 20px;
+            position: fixed;
+            z-index: 10000;
+          }
+          .toggle-btn.open {
+            opacity: 0;
+            pointer-events: none;
+          }
+        }
         .header { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between; }
         .header-title { font-weight: 600; color: var(--text); font-size: 15px; }
         .mode-btn { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; padding: 4px; display: flex; }
