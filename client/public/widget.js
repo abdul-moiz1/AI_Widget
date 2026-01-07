@@ -341,15 +341,20 @@ class AIVoiceWidget extends HTMLElement {
     this.isSpeaking = true;
     this.updateUIState();
 
-    // Do NOT pause VAD here to allow user interruption
-    // But we need to handle the fact that VAD might trigger from AI voice
-    // The browser's built-in echo cancellation usually handles this if mic and speaker are managed correctly
-
     try {
+      // Map gender settings to voice selection
+      // Note: The backend needs to handle these parameters
+      const voiceParams = {
+        text,
+        language: this.voiceSettings.language,
+        voice: this.voiceSettings.voiceGender === 'male' ? 'male' : 'female',
+        style: this.voiceSettings.style
+      };
+
       const res = await fetch(CONFIG.voiceBackendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, ...this.voiceSettings }),
+        body: JSON.stringify(voiceParams),
       });
       const audioBlob = await res.blob();
       const url = URL.createObjectURL(audioBlob);
