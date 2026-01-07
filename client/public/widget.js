@@ -300,13 +300,31 @@ class AIVoiceWidget extends HTMLElement {
         .widget-container.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
 
         @media (max-width: 480px) {
-          :host { bottom: 0; right: 0; width: 100%; height: 100%; }
+          :host { bottom: 0; right: 0; width: 100vw; height: 100vh; }
           .widget-container {
             width: 100%; height: 100%; max-height: 100%;
             bottom: 0; right: 0; border-radius: 0;
             background: var(--bg);
           }
-          .toggle-btn { bottom: 20px; right: 20px; position: fixed; z-index: 10000; }
+          .header {
+            padding: 12px 16px;
+            padding-top: env(safe-area-inset-top, 12px);
+            min-height: 60px;
+          }
+          .content {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+          }
+          .voice-view { gap: 24px; }
+          .mic-wrap { width: 160px; height: 160px; }
+          .voice-mic-btn { width: 80px; height: 80px; }
+          .text-view { padding: 12px; gap: 12px; height: calc(100% - 60px); }
+          .input-wrap { 
+            padding: 4px; 
+            margin-bottom: env(safe-area-inset-bottom, 10px);
+            border-radius: 12px;
+          }
+          #chat-input { padding: 8px 12px; font-size: 16px; } /* Prevent iOS zoom */
+          .toggle-btn { bottom: 24px; right: 24px; position: fixed; z-index: 10000; width: 56px; height: 56px; }
           .toggle-btn.open { opacity: 0; pointer-events: none; }
         }
 
