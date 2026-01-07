@@ -593,30 +593,29 @@ class AIVoiceWidget extends HTMLElement {
 
         .settings-panel {
           position: absolute; top: 60px; right: 20px;
-          background: #2d3748; border-radius: 16px;
-          padding: 20px; width: 240px; z-index: 100;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+          background: #1e293b; border-radius: 20px;
+          padding: 24px; width: 280px; z-index: 100;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
           border: 1px solid rgba(255,255,255,0.1);
-          display: none; flex-direction: column; gap: 16px;
-          backdrop-filter: blur(10px);
+          display: none; flex-direction: column; gap: 20px;
+          backdrop-filter: blur(16px);
         }
-        .settings-panel.open { display: flex; animation: slideIn 0.2s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .setting-item { display: flex; flex-direction: column; gap: 6px; }
-        .setting-label { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-        .setting-select { 
-          background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
-          color: white; border-radius: 10px; padding: 8px 12px; font-size: 14px; outline: none;
-          cursor: pointer; transition: all 0.2s;
-          appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: right 10px center;
-          background-size: 16px;
+        .settings-panel.open { display: flex; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        .setting-item { display: flex; flex-direction: column; gap: 10px; }
+        .setting-label { font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+        
+        .chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip {
+          padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; font-size: 13px;
+          font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+          user-select: none;
         }
-        .setting-select:hover { border-color: var(--primary); background-color: rgba(0,0,0,0.4); }
-        .setting-select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.2); }
-
+        .chip:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff; }
+        .chip.active { background: var(--primary); border-color: var(--primary); color: #000; box-shadow: 0 4px 12px rgba(0, 229, 255, 0.3); }
+        
         .close-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 4px; display: flex; opacity: 0.7; transition: 0.2s; }
         .close-btn:hover { opacity: 1; }
         
@@ -657,30 +656,35 @@ class AIVoiceWidget extends HTMLElement {
         <div class="settings-panel ${this.isSettingsOpen ? 'open' : ''}">
           <div class="setting-item">
             <label class="setting-label">Language</label>
-            <select class="setting-select" id="lang-select">
-              <option value="en" ${this.voiceSettings.language === 'en' ? 'selected' : ''}>English</option>
-              <option value="es" ${this.voiceSettings.language === 'es' ? 'selected' : ''}>Spanish</option>
-              <option value="fr" ${this.voiceSettings.language === 'fr' ? 'selected' : ''}>French</option>
-              <option value="de" ${this.voiceSettings.language === 'de' ? 'selected' : ''}>German</option>
-              <option value="it" ${this.voiceSettings.language === 'it' ? 'selected' : ''}>Italian</option>
-              <option value="pt" ${this.voiceSettings.language === 'pt' ? 'selected' : ''}>Portuguese</option>
-            </select>
+            <div class="chip-group" id="lang-chips">
+              ${[
+                { id: 'en', label: 'English' },
+                { id: 'es', label: 'Spanish' },
+                { id: 'fr', label: 'French' },
+                { id: 'de', label: 'German' },
+                { id: 'it', label: 'Italian' },
+                { id: 'pt', label: 'Portuguese' }
+              ].map(lang => `
+                <div class="chip ${this.voiceSettings.language === lang.id ? 'active' : ''}" data-value="${lang.id}">${lang.label}</div>
+              `).join('')}
+            </div>
           </div>
           <div class="setting-item">
             <label class="setting-label">Voice Gender</label>
-            <select class="setting-select" id="gender-select">
-              <option value="female" ${this.voiceSettings.voiceGender === 'female' ? 'selected' : ''}>Female</option>
-              <option value="male" ${this.voiceSettings.voiceGender === 'male' ? 'selected' : ''}>Male</option>
-            </select>
+            <div class="chip-group" id="gender-chips">
+              <div class="chip ${this.voiceSettings.voiceGender === 'female' ? 'active' : ''}" data-value="female">Female</div>
+              <div class="chip ${this.voiceSettings.voiceGender === 'male' ? 'active' : ''}" data-value="male">Male</div>
+            </div>
           </div>
           <div class="setting-item">
             <label class="setting-label">Voice Style</label>
-            <select class="setting-select" id="style-select">
-              <option value="friendly" ${this.voiceSettings.style === 'friendly' ? 'selected' : ''}>Friendly</option>
-              <option value="professional" ${this.voiceSettings.style === 'professional' ? 'selected' : ''}>Professional</option>
-              <option value="excited" ${this.voiceSettings.style === 'excited' ? 'selected' : ''}>Excited</option>
-              <option value="empathetic" ${this.voiceSettings.style === 'empathetic' ? 'selected' : ''}>Empathetic</option>
-            </select>
+            <div class="chip-group" id="style-chips">
+              ${['friendly', 'professional', 'excited', 'empathetic'].map(style => `
+                <div class="chip ${this.voiceSettings.style === style ? 'active' : ''}" data-value="${style}">
+                  ${style.charAt(0).toUpperCase() + style.slice(1)}
+                </div>
+              `).join('')}
+            </div>
           </div>
         </div>
         <div class="content">
@@ -742,9 +746,15 @@ class AIVoiceWidget extends HTMLElement {
       document.addEventListener('mousedown', this._globalClickListener);
     }
     
-    this.shadowRoot.getElementById("lang-select")?.addEventListener("change", (e) => this.updateVoiceSetting('language', e.target.value));
-    this.shadowRoot.getElementById("gender-select")?.addEventListener("change", (e) => this.updateVoiceSetting('voiceGender', e.target.value));
-    this.shadowRoot.getElementById("style-select")?.addEventListener("change", (e) => this.updateVoiceSetting('style', e.target.value));
+    this.shadowRoot.querySelectorAll("#lang-chips .chip").forEach(chip => {
+      chip.onclick = () => this.updateVoiceSetting('language', chip.dataset.value);
+    });
+    this.shadowRoot.querySelectorAll("#gender-chips .chip").forEach(chip => {
+      chip.onclick = () => this.updateVoiceSetting('voiceGender', chip.dataset.value);
+    });
+    this.shadowRoot.querySelectorAll("#style-chips .chip").forEach(chip => {
+      chip.onclick = () => this.updateVoiceSetting('style', chip.dataset.value);
+    });
 
     if (this.isVoiceMode) {
       const micBtn = this.shadowRoot.getElementById("voice-mic-btn");
