@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Mic, Volume2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import VoiceVisualizer from "./voice-visualizer";
 
 interface WidgetConfig {
   assistantName: string;
@@ -23,6 +25,24 @@ interface LiveWidgetPreviewProps {
 }
 
 export default function LiveWidgetPreview({ config }: LiveWidgetPreviewProps) {
+  const [state, setState] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
+
+  useEffect(() => {
+    if (state === "idle") return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    if (state === "listening") {
+      timeoutId = setTimeout(() => setState("thinking"), 2000);
+    } else if (state === "thinking") {
+      timeoutId = setTimeout(() => setState("speaking"), 1500);
+    } else if (state === "speaking") {
+      timeoutId = setTimeout(() => setState("idle"), 3000);
+    }
+
+    return () => clearTimeout(timeoutId);
+  }, [state]);
+
   const languageLabels: Record<string, string> = {
     en: "English",
     es: "Spanish",
@@ -68,8 +88,17 @@ export default function LiveWidgetPreview({ config }: LiveWidgetPreviewProps) {
             </div>
 
             {/* Welcome Message */}
-            <div className="bg-muted/50 rounded-lg p-4 mb-4 text-sm">
-              <p className="text-foreground/80">{config.welcomeMessage}</p>
+            <div className="bg-muted/50 rounded-lg p-4 mb-4 text-sm relative min-h-[100px] flex flex-col justify-center">
+              {state === "idle" ? (
+                <p className="text-foreground/80">{config.welcomeMessage}</p>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <VoiceVisualizer state={state} primaryColor={config.theme.primaryColor} />
+                  <p className="text-xs font-medium capitalize" style={{ color: config.theme.primaryColor }}>
+                    {state}...
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Configuration Summary */}
@@ -123,12 +152,16 @@ export default function LiveWidgetPreview({ config }: LiveWidgetPreviewProps) {
             {/* Simulated Widget Button */}
             <div className="mt-6 pt-4 border-t border-muted flex justify-center">
               <button
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-transform hover:scale-105"
+                onClick={() => state === "idle" && setState("listening")}
+                disabled={state !== "idle"}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 style={{ backgroundColor: config.theme.primaryColor }}
                 data-testid="button-preview-widget"
               >
                 <Volume2 className="w-4 h-4" />
-                <span className="text-sm font-medium">Talk to {config.assistantName}</span>
+                <span className="text-sm font-medium">
+                  {state === "idle" ? `Talk to ${config.assistantName}` : state.charAt(0).toUpperCase() + state.slice(1)}
+                </span>
               </button>
             </div>
           </div>
