@@ -11,8 +11,9 @@ const CONFIG = {
     background: "#1a202c",
     text: "#ffffff",
   },
-  vadUrl: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.19/dist/bundle.js",
-  onnxUrl: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.js"
+  // Updated working CDN URLs for 2026
+  vadUrl: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/bundle.min.js",
+  onnxUrl: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.js"
 };
 
 class AIVoiceWidget extends HTMLElement {
@@ -119,7 +120,10 @@ class AIVoiceWidget extends HTMLElement {
         onVADMisfire: () => {
           this.isListening = false;
           this.updateUIState();
-        }
+        },
+        // Required for CDN usage with @ricky0123/vad-web
+        onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
+        baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
       });
       await this.vad.start();
       this.isListening = true;
@@ -263,7 +267,6 @@ class AIVoiceWidget extends HTMLElement {
     this.render();
     if (this.isOpen) {
       this.startVisualizer();
-      // Don't auto-setup VAD on open, wait for mic click
     } else {
       if (this.vad) {
         try { await this.vad.pause(); } catch(e) {}
@@ -365,7 +368,6 @@ class AIVoiceWidget extends HTMLElement {
     const closeBtn = this.shadowRoot.getElementById("close-btn-header");
     if (closeBtn) closeBtn.onclick = () => this.toggleChat();
     
-    // Explicitly bind the mic button click
     const micBtn = this.shadowRoot.getElementById("voice-mic-btn");
     if (micBtn) {
       micBtn.onclick = async () => {
