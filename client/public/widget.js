@@ -73,7 +73,12 @@ class AIVoiceWidget extends HTMLElement {
 
   async setupVAD() {
     if (this.vad) {
-      try { await this.vad.start(); return; } catch(e) {}
+      try { 
+        await this.vad.start(); 
+        this.isListening = true;
+        this.updateUIState();
+        return; 
+      } catch(e) {}
     }
 
     try {
@@ -86,7 +91,6 @@ class AIVoiceWidget extends HTMLElement {
         if (!window.vad) throw new Error("VAD library timeout");
       }
       
-      // Ensure AudioContext is created/resumed on user interaction
       if (!this.audioContext) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -118,6 +122,8 @@ class AIVoiceWidget extends HTMLElement {
         }
       });
       await this.vad.start();
+      this.isListening = true;
+      this.updateUIState();
     } catch (e) {
       console.error("VAD Setup Error:", e);
       const status = this.shadowRoot.getElementById("voice-status");
@@ -256,12 +262,13 @@ class AIVoiceWidget extends HTMLElement {
     this.isOpen = !this.isOpen;
     this.render();
     if (this.isOpen) {
-      await this.setupVAD();
       this.startVisualizer();
+      // Don't auto-setup VAD on open, wait for mic click
     } else {
       if (this.vad) {
         try { await this.vad.pause(); } catch(e) {}
       }
+      this.isListening = false;
       if (this.animationId) cancelAnimationFrame(this.animationId);
       this.stopAIPlayback();
     }
@@ -357,6 +364,20 @@ class AIVoiceWidget extends HTMLElement {
     this.shadowRoot.getElementById("toggle-trigger").onclick = () => this.toggleChat();
     const closeBtn = this.shadowRoot.getElementById("close-btn-header");
     if (closeBtn) closeBtn.onclick = () => this.toggleChat();
+    
+    // Explicitly bind the mic button click
+    const micBtn = this.shadowRoot.getElementById("voice-mic-btn");
+    if (micBtn) {
+      micBtn.onclick = async () => {
+        if (!this.vad || !this.isListening) {
+          await this.setupVAD();
+        } else {
+          try { await this.vad.pause(); } catch(e) {}
+          this.isListening = false;
+          this.updateUIState();
+        }
+      };
+    }
   }
 }
 
