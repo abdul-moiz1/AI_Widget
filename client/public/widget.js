@@ -526,7 +526,7 @@ class AIVoiceWidget extends HTMLElement {
       // Stop and restart recognition with new language
       try {
         this.recognition.stop();
-        this.recognition.lang = value === 'en' ? 'en-US' : (value === 'es' ? 'es-ES' : (value === 'fr' ? 'fr-FR' : (value === 'de' ? 'de-DE' : (value === 'it' ? 'it-IT' : 'pt-PT'))));
+        this.recognition.lang = value === 'en' ? 'en-US' : (value === 'es' ? 'es-ES' : 'ar-SA');
         if (this.isOpen && this.isVoiceMode) {
           setTimeout(() => {
             try { this.recognition.start(); } catch(e) {}
@@ -659,11 +659,8 @@ class AIVoiceWidget extends HTMLElement {
             <div class="chip-group" id="lang-chips">
               ${[
                 { id: 'en', label: 'English' },
-                { id: 'es', label: 'Spanish' },
-                { id: 'fr', label: 'French' },
-                { id: 'de', label: 'German' },
-                { id: 'it', label: 'Italian' },
-                { id: 'pt', label: 'Portuguese' }
+                { id: 'ar', label: 'Arabic' },
+                { id: 'es', label: 'Spanish' }
               ].map(lang => `
                 <div class="chip ${this.voiceSettings.language === lang.id ? 'active' : ''}" data-value="${lang.id}">${lang.label}</div>
               `).join('')}
@@ -679,7 +676,7 @@ class AIVoiceWidget extends HTMLElement {
           <div class="setting-item">
             <label class="setting-label">Voice Style</label>
             <div class="chip-group" id="style-chips">
-              ${['friendly', 'professional', 'excited', 'empathetic'].map(style => `
+              ${['friendly', 'professional'].map(style => `
                 <div class="chip ${this.voiceSettings.style === style ? 'active' : ''}" data-value="${style}">
                   ${style.charAt(0).toUpperCase() + style.slice(1)}
                 </div>
