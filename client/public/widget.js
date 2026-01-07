@@ -103,6 +103,30 @@ class AIVoiceWidget extends HTMLElement {
         await this.audioContext.resume();
       }
 
+      // Initialize Speech Recognition for transcription
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = true;
+        this.recognition.lang = this.voiceSettings.language || 'en-US';
+
+        this.recognition.onresult = (event) => {
+          let transcript = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              transcript += event.results[i][0].transcript;
+            }
+          }
+          if (transcript) {
+            this.lastTranscript = transcript;
+            console.log("Transcript found:", transcript);
+          }
+        };
+        
+        this.recognition.start();
+      }
+
       if (!this.analyser) {
         this.analyser = this.audioContext.createAnalyser();
         this.analyser.fftSize = 256;
@@ -113,12 +137,16 @@ class AIVoiceWidget extends HTMLElement {
         onSpeechStart: () => {
           if (this.isSpeaking) this.stopAIPlayback();
           this.isListening = true;
+          this.lastTranscript = ""; // Reset transcript on new speech
           this.updateUIState();
         },
         onSpeechEnd: (audio) => {
           this.isListening = false;
           this.updateUIState();
-          this.processAudio(audio);
+          // Short delay to allow speech recognition to finalize
+          setTimeout(() => {
+            this.processAudio(audio, this.lastTranscript);
+          }, 500);
         },
         onVADMisfire: () => {
           this.isListening = false;
@@ -146,12 +174,10 @@ class AIVoiceWidget extends HTMLElement {
     this.updateUIState();
   }
 
-  async processAudio(audioFloat32) {
+  async processAudio(audioFloat32, transcript) {
     this.isProcessing = true;
     this.updateUIState();
     
-    // In a production app, audioFloat32 would be sent for STT.
-    // For this flow, we notify the user we are processing.
     try {
       const res = await fetch(CONFIG.backendUrl, {
         method: "POST",
@@ -159,22 +185,21 @@ class AIVoiceWidget extends HTMLElement {
         body: JSON.stringify({
           sessionId: this.sessionId,
           businessId: this.businessId,
+          message: transcript || "", // Pass transcription if available
           recentMessages: this.conversationBuffer,
-          // Sending audio as data or identifying it as a voice request
           voiceRequest: true 
         }),
       });
       const data = await res.json();
       
-      // Handle transcription if backend returns it
-      if (data.transcription) {
-        this.messages.push({ role: "user", text: data.transcription });
-        this.conversationBuffer.push({ role: "user", text: data.transcription });
+      const userText = transcript || data.transcription;
+      if (userText) {
+        this.messages.push({ role: "user", text: userText });
+        this.conversationBuffer.push({ role: "user", text: userText });
       }
 
       const reply = data.reply || data.message || "I'm sorry, I didn't catch that.";
       
-      // Only push to messages if it's not a generic placeholder
       if (reply !== "I heard you.") {
         this.messages.push({ role: "assistant", text: reply });
         this.conversationBuffer.push({ role: "assistant", text: reply });
@@ -182,9 +207,6 @@ class AIVoiceWidget extends HTMLElement {
         
         this.renderMessages();
         await this.speak(reply);
-      } else {
-        // If it's a placeholder, try to get a real response or fallback
-        console.warn("Received placeholder response");
       }
     } catch (e) {
       console.error("Processing Error:", e);
