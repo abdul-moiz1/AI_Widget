@@ -24,8 +24,11 @@ class AIVoiceWidget extends HTMLElement {
     this.isListening = false;
     this.isProcessing = false;
     this.isSpeaking = false;
+    this.isVoiceMode = true; // Added back voice/text mode toggle state
     this.sessionId = this.getSessionId();
+    this.messages = []; // Store chat history
     this.conversationBuffer = [];
+    this.maxBufferSize = 10;
     this.audioContext = null;
     this.analyser = null;
     this.dataArray = null;
@@ -121,7 +124,6 @@ class AIVoiceWidget extends HTMLElement {
           this.isListening = false;
           this.updateUIState();
         },
-        // Required for CDN usage with @ricky0123/vad-web
         onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
         baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
       });
@@ -158,11 +160,54 @@ class AIVoiceWidget extends HTMLElement {
         }),
       });
       const data = await res.json();
-      const reply = data.reply || "I'm listening.";
+      const reply = data.reply || data.message || "I'm listening.";
+      
+      this.messages.push({ role: "assistant", text: reply });
       this.conversationBuffer.push({ role: "assistant", text: reply });
+      if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
+      
       await this.speak(reply);
     } catch (e) {
       console.error("Processing Error:", e);
+    } finally {
+      this.isProcessing = false;
+      this.updateUIState();
+    }
+  }
+
+  async handleTextMessage(text) {
+    if (!text?.trim() || this.isProcessing) return;
+    
+    this.messages.push({ role: "user", text });
+    this.conversationBuffer.push({ role: "user", text });
+    if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
+    
+    this.isProcessing = true;
+    this.renderMessages();
+    this.updateUIState();
+
+    try {
+      const res = await fetch(CONFIG.backendUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: this.sessionId,
+          businessId: this.businessId,
+          message: text,
+          recentMessages: this.conversationBuffer
+        }),
+      });
+      const data = await res.json();
+      const reply = data.reply || data.message || "I'm sorry, I couldn't process that.";
+      
+      this.messages.push({ role: "assistant", text: reply });
+      this.conversationBuffer.push({ role: "assistant", text: reply });
+      if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
+      
+      this.renderMessages();
+    } catch (e) {
+      this.messages.push({ role: "assistant", text: "Connection error. Please try again." });
+      this.renderMessages();
     } finally {
       this.isProcessing = false;
       this.updateUIState();
@@ -210,7 +255,7 @@ class AIVoiceWidget extends HTMLElement {
     const ctx = canvas.getContext("2d");
     
     const draw = () => {
-      if (!this.isOpen) return;
+      if (!this.isOpen || !this.isVoiceMode) return;
       this.animationId = requestAnimationFrame(draw);
       
       const bars = 5;
@@ -266,7 +311,8 @@ class AIVoiceWidget extends HTMLElement {
     this.isOpen = !this.isOpen;
     this.render();
     if (this.isOpen) {
-      this.startVisualizer();
+      if (this.isVoiceMode) this.startVisualizer();
+      else this.renderMessages();
     } else {
       if (this.vad) {
         try { await this.vad.pause(); } catch(e) {}
@@ -275,6 +321,19 @@ class AIVoiceWidget extends HTMLElement {
       if (this.animationId) cancelAnimationFrame(this.animationId);
       this.stopAIPlayback();
     }
+  }
+
+  toggleMode() {
+    this.isVoiceMode = !this.isVoiceMode;
+    if (!this.isVoiceMode) {
+      if (this.vad) try { this.vad.pause(); } catch(e) {}
+      this.isListening = false;
+      if (this.animationId) cancelAnimationFrame(this.animationId);
+      this.stopAIPlayback();
+    }
+    this.render();
+    if (this.isVoiceMode && this.isOpen) this.startVisualizer();
+    else if (!this.isVoiceMode && this.isOpen) this.renderMessages();
   }
 
   updateUIState() {
@@ -289,6 +348,15 @@ class AIVoiceWidget extends HTMLElement {
     if (mic) mic.classList.toggle("listening", this.isListening);
   }
 
+  renderMessages() {
+    const container = this.shadowRoot.getElementById("messages-container");
+    if (!container) return;
+    container.innerHTML = this.messages.map(m => `
+      <div class="message ${m.role}">${m.text}</div>
+    `).join("");
+    container.scrollTop = container.scrollHeight;
+  }
+
   renderHeader() {
     const langCode = this.voiceSettings.language.toUpperCase();
     return `
@@ -296,6 +364,12 @@ class AIVoiceWidget extends HTMLElement {
         <span class="header-title">${this.businessName}</span>
         <div style="display: flex; gap: 8px; align-items: center;">
           <div class="settings-btn">${langCode}</div>
+          <button class="mode-btn" id="mode-toggle" title="Toggle Chat Mode">
+            ${this.isVoiceMode 
+              ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>'
+              : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>'
+            }
+          </button>
           <button class="close-btn" id="close-btn-header">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
@@ -314,7 +388,7 @@ class AIVoiceWidget extends HTMLElement {
         }
         .widget-container {
           position: fixed; bottom: 100px; right: 24px;
-          width: 360px; height: 500px;
+          width: 360px; height: 550px;
           background: #1e293b;
           border-radius: 24px;
           display: flex; flex-direction: column; overflow: hidden;
@@ -323,12 +397,22 @@ class AIVoiceWidget extends HTMLElement {
           transition: all 0.3s ease;
         }
         .widget-container.open { opacity: 1; transform: translateY(0); pointer-events: all; }
-        .header { padding: 20px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .header { padding: 16px 20px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .header-title { font-weight: 700; color: #fff; font-size: 16px; }
-        .settings-btn { background: rgba(255,255,255,0.1); color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+        
+        .mode-btn, .settings-btn { 
+          background: rgba(255,255,255,0.08); border: none; color: white; 
+          cursor: pointer; padding: 6px 10px; display: flex; border-radius: 8px;
+          transition: 0.2s; font-size: 12px; font-weight: 600;
+        }
+        .mode-btn:hover { background: rgba(255,255,255,0.15); }
+
         .close-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 4px; display: flex; opacity: 0.7; transition: 0.2s; }
         .close-btn:hover { opacity: 1; }
-        .content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 20px; }
+        
+        .content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        
+        .voice-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 20px; }
         .mic-wrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; }
         #waveform { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         .voice-mic-btn { 
@@ -340,6 +424,17 @@ class AIVoiceWidget extends HTMLElement {
         .voice-mic-btn.listening { background: #ef4444; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         #voice-status { font-size: 14px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .text-view { flex: 1; display: flex; flex-direction: column; padding: 16px; gap: 12px; overflow: hidden; }
+        #messages-container { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
+        .message { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4; }
+        .message.user { align-self: flex-end; background: var(--primary); color: #000; border-bottom-right-radius: 4px; }
+        .message.assistant { align-self: flex-start; background: rgba(255,255,255,0.08); color: #fff; border-bottom-left-radius: 4px; }
+        
+        .input-wrap { display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 14px; }
+        #chat-input { flex: 1; background: transparent; border: none; padding: 10px 12px; color: #fff; outline: none; font-size: 14px; }
+        .send-btn { background: var(--primary); border: none; border-radius: 10px; width: 36px; height: 36px; color: #000; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
         .toggle-btn { 
           width: 60px; height: 60px; border-radius: 20px; background: var(--primary); 
           color: #000; display: flex; align-items: center; justify-content: center; 
@@ -350,13 +445,27 @@ class AIVoiceWidget extends HTMLElement {
       <div class="widget-container ${this.isOpen ? 'open' : ''}">
         ${this.renderHeader()}
         <div class="content">
-          <div class="mic-wrap">
-            <canvas id="waveform" width="140" height="140"></canvas>
-            <button class="voice-mic-btn" id="voice-mic-btn">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-            </button>
-          </div>
-          <div id="voice-status">Tap to speak</div>
+          ${this.isVoiceMode ? `
+            <div class="voice-view">
+              <div class="mic-wrap">
+                <canvas id="waveform" width="140" height="140"></canvas>
+                <button class="voice-mic-btn" id="voice-mic-btn">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+              </div>
+              <div id="voice-status">Tap to speak</div>
+            </div>
+          ` : `
+            <div class="text-view">
+              <div id="messages-container"></div>
+              <div class="input-wrap">
+                <input type="text" id="chat-input" placeholder="Message..." autocomplete="off">
+                <button class="send-btn" id="send-btn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+              </div>
+            </div>
+          `}
         </div>
       </div>
       <div class="toggle-btn ${this.isOpen ? 'open' : ''}" id="toggle-trigger">
@@ -368,17 +477,36 @@ class AIVoiceWidget extends HTMLElement {
     const closeBtn = this.shadowRoot.getElementById("close-btn-header");
     if (closeBtn) closeBtn.onclick = () => this.toggleChat();
     
-    const micBtn = this.shadowRoot.getElementById("voice-mic-btn");
-    if (micBtn) {
-      micBtn.onclick = async () => {
-        if (!this.vad || !this.isListening) {
-          await this.setupVAD();
-        } else {
-          try { await this.vad.pause(); } catch(e) {}
-          this.isListening = false;
-          this.updateUIState();
+    const modeBtn = this.shadowRoot.getElementById("mode-toggle");
+    if (modeBtn) modeBtn.onclick = () => this.toggleMode();
+
+    if (this.isVoiceMode) {
+      const micBtn = this.shadowRoot.getElementById("voice-mic-btn");
+      if (micBtn) {
+        micBtn.onclick = async () => {
+          if (!this.vad || !this.isListening) {
+            await this.setupVAD();
+          } else {
+            try { await this.vad.pause(); } catch(e) {}
+            this.isListening = false;
+            this.updateUIState();
+          }
+        };
+      }
+    } else {
+      const sendBtn = this.shadowRoot.getElementById("send-btn");
+      const input = this.shadowRoot.getElementById("chat-input");
+      if (sendBtn) sendBtn.onclick = () => {
+        this.handleTextMessage(input.value);
+        input.value = "";
+      };
+      if (input) input.onkeydown = (e) => {
+        if (e.key === "Enter") {
+          this.handleTextMessage(input.value);
+          input.value = "";
         }
       };
+      this.renderMessages();
     }
   }
 }
