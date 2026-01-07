@@ -114,13 +114,15 @@ class AIVoiceWidget extends HTMLElement {
         this.recognition.onresult = (event) => {
           let transcript = "";
           for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-              transcript += event.results[i][0].transcript;
-            }
+            transcript += event.results[i][0].transcript;
           }
           if (transcript) {
             this.lastTranscript = transcript;
             console.log("Transcript found:", transcript);
+            
+            // Immediately update the status to show what was heard
+            const status = this.shadowRoot.getElementById("voice-status");
+            if (status) status.textContent = ` Heard: "${transcript}"`;
           }
         };
         
