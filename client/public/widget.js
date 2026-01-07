@@ -141,14 +141,32 @@ class AIVoiceWidget extends HTMLElement {
           this.isListening = true;
           this.lastTranscript = ""; // Reset transcript on new speech
           this.updateUIState();
+          
+          // Ensure recognition is running when speech starts
+          if (this.recognition) {
+            try {
+              this.recognition.start();
+            } catch (e) {
+              // Recognition might already be started, which is fine
+            }
+          }
         },
         onSpeechEnd: (audio) => {
-          this.isListening = false;
+          this.isListening = true; // Keep listening state true until processed
           this.updateUIState();
-          // Short delay to allow speech recognition to finalize
+          
+          // Stop recognition to force a final result
+          if (this.recognition) {
+            try {
+              this.recognition.stop();
+            } catch (e) {}
+          }
+
+          // Small delay to allow speech recognition to finalize
           setTimeout(() => {
+            this.isListening = false;
             this.processAudio(audio, this.lastTranscript);
-          }, 500);
+          }, 800);
         },
         onVADMisfire: () => {
           this.isListening = false;
