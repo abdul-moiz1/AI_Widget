@@ -30,17 +30,27 @@ export default function LiveWidgetPreview({ config }: LiveWidgetPreviewProps) {
   useEffect(() => {
     if (state === "idle") return;
 
-    let timeoutId: NodeJS.Timeout;
+    const timeouts = {
+      listening: 2000,
+      thinking: 1500,
+      speaking: 3000,
+    };
 
-    if (state === "listening") {
-      timeoutId = setTimeout(() => setState("thinking"), 2000);
-    } else if (state === "thinking") {
-      timeoutId = setTimeout(() => setState("speaking"), 1500);
-    } else if (state === "speaking") {
-      timeoutId = setTimeout(() => setState("idle"), 3000);
+    const nextStates: Record<string, "idle" | "listening" | "thinking" | "speaking"> = {
+      listening: "thinking",
+      thinking: "speaking",
+      speaking: "idle",
+    };
+
+    const delay = timeouts[state as keyof typeof timeouts];
+    const nextState = nextStates[state as keyof typeof nextStates];
+
+    if (delay && nextState) {
+      const timeoutId = setTimeout(() => {
+        setState(nextState);
+      }, delay);
+      return () => clearTimeout(timeoutId);
     }
-
-    return () => clearTimeout(timeoutId);
   }, [state]);
 
   const languageLabels: Record<string, string> = {
