@@ -323,10 +323,9 @@ class AIVoiceWidget extends HTMLElement {
     this.isSpeaking = true;
     this.updateUIState();
 
-    // Pause VAD while speaking to prevent self-interruption
-    if (this.vad) {
-      try { await this.vad.pause(); } catch(e) {}
-    }
+    // Do NOT pause VAD here to allow user interruption
+    // But we need to handle the fact that VAD might trigger from AI voice
+    // The browser's built-in echo cancellation usually handles this if mic and speaker are managed correctly
 
     try {
       const res = await fetch(CONFIG.voiceBackendUrl, {
@@ -353,24 +352,12 @@ class AIVoiceWidget extends HTMLElement {
       this.audioElement.onended = async () => {
         this.isSpeaking = false;
         this.updateUIState();
-        // Resume VAD after speaking finishes for continuous loop
-        if (this.vad && this.isOpen && this.isVoiceMode) {
-          try { 
-            await this.vad.start(); 
-            this.isListening = true;
-            this.updateUIState();
-          } catch(e) {}
-        }
       };
       await this.audioElement.play();
     } catch (e) {
       console.error("Speech Error:", e);
       this.isSpeaking = false;
       this.updateUIState();
-      // Resume VAD on error
-      if (this.vad && this.isOpen && this.isVoiceMode) {
-        try { await this.vad.start(); } catch(e) {}
-      }
     }
   }
 
