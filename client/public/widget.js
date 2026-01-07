@@ -515,7 +515,18 @@ class AIVoiceWidget extends HTMLElement {
   updateVoiceSetting(key, value) {
     this.voiceSettings[key] = value;
     if (key === 'language' && this.recognition) {
-      this.recognition.lang = value === 'en' ? 'en-US' : value;
+      // Stop and restart recognition with new language
+      try {
+        this.recognition.stop();
+        this.recognition.lang = value === 'en' ? 'en-US' : (value === 'es' ? 'es-ES' : 'fr-FR');
+        if (this.isOpen && this.isVoiceMode) {
+          setTimeout(() => {
+            try { this.recognition.start(); } catch(e) {}
+          }, 300);
+        }
+      } catch(e) {
+        console.error("Error updating recognition language:", e);
+      }
     }
     this.render();
   }
