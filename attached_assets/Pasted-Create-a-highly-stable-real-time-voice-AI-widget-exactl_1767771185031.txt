@@ -1,0 +1,48 @@
+Create a highly stable, real-time voice AI widget exactly like ChatGPT's voice mode, using modern 2026 best practices.
+
+The widget is a floating bottom-right bubble that opens into a full voice conversation interface with smooth interruptions (user can barge-in while AI is speaking → AI instantly stops and listens).
+
+Key requirements:
+
+1. **Core Behavior**:
+   - Continuous loop: Listening → Thinking → Speaking → repeat
+   - Natural interruptions: If user starts speaking while AI is speaking, immediately stop AI audio playback and process user input
+   - Low latency, natural feel
+
+2. **Tech Stack**:
+   - Use client-side Voice Activity Detection (VAD) with the @ricky0123/vad-web library for reliable speech detection and interruption handling
+   - Use ElevenLabs streaming TTS (chunked or WebSocket) for real-time audio playback (not full blob fetch)
+   - Send user audio (WAV blobs from VAD) to a Firebase/Google Cloud Function for speech-to-text (use Google Speech-to-Text or Whisper via API)
+   - Then send transcribed text to Gemini (via your existing Firebase backend)
+   - Play streaming response from ElevenLabs
+
+3. **UI**:
+   - Keep the exact beautiful design: dark blurred glassmorphism, cyan primary (#00e5ff), waveform visualizer with pulsing bars, floating toggle button
+   - Voice mode only (no text chat needed)
+   - Status text: "Listening...", "Thinking...", "Speaking...", "Tap to speak"
+   - Mic button that pulses red when listening
+   - Settings panel for language (en/es/ar), gender, style
+
+4. **Backend**:
+   - Assume two Firebase functions already exist:
+     - Text-to-Gemini: POST to https://chat-ieskeqprjq-uc.a.run.app with {sessionId, message, businessId, recentMessages}
+     - Text-to-Voice: POST to https://generatevoice-ieskeqprjq-uc.a.run.app (but we will upgrade to streaming)
+  
+
+5. **Improvements Over Current Code**:
+   - Replace Web SpeechRecognition (unreliable, no good interruption) with VAD
+   - Replace full audio blob fetch with ElevenLabs streaming for instant speech start
+   - Add proper interruption: pause/stop audio immediately on user speech detection
+   - Better visualizer tied to actual mic input or playback
+   - Smooth state management and error recovery
+
+6. **File
+    -All working in the widget.js
+
+7. **Bonus Polish**:
+   - Add subtle sound feedback (beep on start/stop listening)
+   - Mobile full-screen support
+   - Session persistence via localStorage
+   - Graceful fallback if mic denied
+
+Generate complete, working, production-quality code. Make it beautiful, stable, and feel exactly like talking to advanced voice AI in 2026.
