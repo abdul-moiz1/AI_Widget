@@ -24,9 +24,9 @@ class AIVoiceWidget extends HTMLElement {
     this.isListening = false;
     this.isProcessing = false;
     this.isSpeaking = false;
-    this.isVoiceMode = true; // Added back voice/text mode toggle state
+    this.isVoiceMode = true;
     this.sessionId = this.getSessionId();
-    this.messages = []; // Store chat history
+    this.messages = [];
     this.conversationBuffer = [];
     this.maxBufferSize = 10;
     this.audioContext = null;
@@ -160,7 +160,7 @@ class AIVoiceWidget extends HTMLElement {
         }),
       });
       const data = await res.json();
-      const reply = data.reply || data.message || "I'm listening.";
+      const reply = data.reply || data.message || "I heard you.";
       
       this.messages.push({ role: "assistant", text: reply });
       this.conversationBuffer.push({ role: "assistant", text: reply });
@@ -205,6 +205,8 @@ class AIVoiceWidget extends HTMLElement {
       if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
       
       this.renderMessages();
+      // Added speaking for text messages too
+      await this.speak(reply);
     } catch (e) {
       this.messages.push({ role: "assistant", text: "Connection error. Please try again." });
       this.renderMessages();
@@ -215,6 +217,13 @@ class AIVoiceWidget extends HTMLElement {
   }
 
   async speak(text) {
+    if (!this.audioContext) {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (this.audioContext.state === 'suspended') {
+      await this.audioContext.resume();
+    }
+
     this.isSpeaking = true;
     this.updateUIState();
     try {
@@ -233,8 +242,10 @@ class AIVoiceWidget extends HTMLElement {
       
       if (!this.audioSource) {
         this.audioSource = this.audioContext.createMediaElementSource(this.audioElement);
-        this.audioSource.connect(this.analyser);
-        this.analyser.connect(this.audioContext.destination);
+        this.audioSource.connect(this.analyser || this.audioContext.destination);
+        if (this.analyser) {
+          this.analyser.connect(this.audioContext.destination);
+        }
       }
 
       this.audioElement.onended = () => {
@@ -273,7 +284,7 @@ class AIVoiceWidget extends HTMLElement {
           height = 8 + Math.sin(Date.now() / 150 + i) * 4;
           ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 200) * 0.2;
         } else if (this.isListening || this.isSpeaking) {
-          if (this.dataArray) {
+          if (this.dataArray && this.analyser) {
             this.analyser.getByteFrequencyData(this.dataArray);
             const value = this.dataArray[i * 2] || 0;
             height = (value / 5) + 4;
