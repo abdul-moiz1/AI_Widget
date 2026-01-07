@@ -128,12 +128,12 @@ class AIVoiceWidget extends HTMLElement {
           
           if (combined) {
             this.lastTranscript = combined.trim();
+            console.log("LIVE TRANSCRIPT:", this.lastTranscript); // Log for debugging
             
             // Live update the UI
             const status = this.shadowRoot.getElementById("voice-status");
             if (status) {
               status.textContent = this.lastTranscript;
-              // Ensure the text is visible and perhaps style it slightly differently if interim
               status.style.opacity = interimTranscript ? "0.7" : "1";
             }
           }
