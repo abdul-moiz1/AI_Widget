@@ -523,7 +523,7 @@ class AIVoiceWidget extends HTMLElement {
       // Stop and restart recognition with new language
       try {
         this.recognition.stop();
-        this.recognition.lang = value === 'en' ? 'en-US' : (value === 'es' ? 'es-ES' : 'fr-FR');
+        this.recognition.lang = value === 'en' ? 'en-US' : (value === 'es' ? 'es-ES' : (value === 'fr' ? 'fr-FR' : (value === 'de' ? 'de-DE' : (value === 'it' ? 'it-IT' : 'pt-PT'))));
         if (this.isOpen && this.isVoiceMode) {
           setTimeout(() => {
             try { this.recognition.start(); } catch(e) {}
@@ -590,19 +590,29 @@ class AIVoiceWidget extends HTMLElement {
 
         .settings-panel {
           position: absolute; top: 60px; right: 20px;
-          background: #2d3748; border-radius: 12px;
-          padding: 16px; width: 200px; z-index: 100;
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          background: #2d3748; border-radius: 16px;
+          padding: 20px; width: 240px; z-index: 100;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
           border: 1px solid rgba(255,255,255,0.1);
-          display: none; flex-direction: column; gap: 12px;
+          display: none; flex-direction: column; gap: 16px;
+          backdrop-filter: blur(10px);
         }
-        .settings-panel.open { display: flex; }
-        .setting-item { display: flex; flex-direction: column; gap: 4px; }
-        .setting-label { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+        .settings-panel.open { display: flex; animation: slideIn 0.2s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .setting-item { display: flex; flex-direction: column; gap: 6px; }
+        .setting-label { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
         .setting-select { 
-          background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
-          color: white; border-radius: 6px; padding: 4px 8px; font-size: 13px; outline: none;
+          background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+          color: white; border-radius: 10px; padding: 8px 12px; font-size: 14px; outline: none;
+          cursor: pointer; transition: all 0.2s;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 10px center;
+          background-size: 16px;
         }
+        .setting-select:hover { border-color: var(--primary); background-color: rgba(0,0,0,0.4); }
+        .setting-select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.2); }
 
         .close-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 4px; display: flex; opacity: 0.7; transition: 0.2s; }
         .close-btn:hover { opacity: 1; }
@@ -648,6 +658,9 @@ class AIVoiceWidget extends HTMLElement {
               <option value="en" ${this.voiceSettings.language === 'en' ? 'selected' : ''}>English</option>
               <option value="es" ${this.voiceSettings.language === 'es' ? 'selected' : ''}>Spanish</option>
               <option value="fr" ${this.voiceSettings.language === 'fr' ? 'selected' : ''}>French</option>
+              <option value="de" ${this.voiceSettings.language === 'de' ? 'selected' : ''}>German</option>
+              <option value="it" ${this.voiceSettings.language === 'it' ? 'selected' : ''}>Italian</option>
+              <option value="pt" ${this.voiceSettings.language === 'pt' ? 'selected' : ''}>Portuguese</option>
             </select>
           </div>
           <div class="setting-item">
@@ -655,6 +668,15 @@ class AIVoiceWidget extends HTMLElement {
             <select class="setting-select" id="gender-select">
               <option value="female" ${this.voiceSettings.voiceGender === 'female' ? 'selected' : ''}>Female</option>
               <option value="male" ${this.voiceSettings.voiceGender === 'male' ? 'selected' : ''}>Male</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label class="setting-label">Voice Style</label>
+            <select class="setting-select" id="style-select">
+              <option value="friendly" ${this.voiceSettings.style === 'friendly' ? 'selected' : ''}>Friendly</option>
+              <option value="professional" ${this.voiceSettings.style === 'professional' ? 'selected' : ''}>Professional</option>
+              <option value="excited" ${this.voiceSettings.style === 'excited' ? 'selected' : ''}>Excited</option>
+              <option value="empathetic" ${this.voiceSettings.style === 'empathetic' ? 'selected' : ''}>Empathetic</option>
             </select>
           </div>
         </div>
@@ -695,10 +717,31 @@ class AIVoiceWidget extends HTMLElement {
     if (modeBtn) modeBtn.onclick = () => this.toggleMode();
 
     const settingsToggle = this.shadowRoot.getElementById("settings-toggle");
-    if (settingsToggle) settingsToggle.onclick = () => this.toggleSettings();
+    if (settingsToggle) {
+      settingsToggle.onclick = (e) => {
+        e.stopPropagation();
+        this.toggleSettings();
+      };
+    }
+    
+    // Global click listener to close settings when clicking outside
+    if (!this._globalClickListener) {
+      this._globalClickListener = (e) => {
+        const path = e.composedPath();
+        const isSettingsBtn = path.includes(this.shadowRoot.getElementById("settings-toggle"));
+        const isSettingsPanel = path.some(el => el.classList?.contains('settings-panel'));
+        
+        if (!isSettingsBtn && !isSettingsPanel && this.isSettingsOpen) {
+          this.isSettingsOpen = false;
+          this.render();
+        }
+      };
+      document.addEventListener('mousedown', this._globalClickListener);
+    }
     
     this.shadowRoot.getElementById("lang-select")?.addEventListener("change", (e) => this.updateVoiceSetting('language', e.target.value));
     this.shadowRoot.getElementById("gender-select")?.addEventListener("change", (e) => this.updateVoiceSetting('voiceGender', e.target.value));
+    this.shadowRoot.getElementById("style-select")?.addEventListener("change", (e) => this.updateVoiceSetting('style', e.target.value));
 
     if (this.isVoiceMode) {
       const micBtn = this.shadowRoot.getElementById("voice-mic-btn");
