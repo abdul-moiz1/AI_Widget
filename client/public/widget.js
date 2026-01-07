@@ -202,10 +202,10 @@ class AIVoiceWidget extends HTMLElement {
     this.isProcessing = true;
     this.updateUIState();
     
-    // Fallback: If no transcript, use a default prompt to trigger a real response
     const finalMessage = transcript?.trim() || "";
 
     try {
+      // If we have a transcript, don't just "listen", actually process it
       const res = await fetch(CONFIG.backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -228,19 +228,19 @@ class AIVoiceWidget extends HTMLElement {
 
       const reply = data.reply || data.message || "I'm sorry, I didn't catch that.";
       
-      if (reply !== "I heard you.") {
+      // If the transcript was empty or very short, and backend returned placeholder
+      if ((reply === "I heard you." || !data.reply) && !finalMessage) {
+        const fallbackReply = "I'm sorry, I didn't catch that.";
+        this.messages.push({ role: "assistant", text: fallbackReply });
+        this.renderMessages();
+        await this.speak(fallbackReply);
+      } else {
         this.messages.push({ role: "assistant", text: reply });
         this.conversationBuffer.push({ role: "assistant", text: reply });
         if (this.conversationBuffer.length > this.maxBufferSize) this.conversationBuffer.shift();
         
         this.renderMessages();
         await this.speak(reply);
-      } else if (!finalMessage) {
-        // If we got "I heard you" and had no transcript, it's likely a misfire or empty audio
-        const fallbackReply = "I'm sorry, I didn't catch that.";
-        this.messages.push({ role: "assistant", text: fallbackReply });
-        this.renderMessages();
-        await this.speak(fallbackReply);
       }
     } catch (e) {
       console.error("Processing Error:", e);
@@ -361,39 +361,45 @@ class AIVoiceWidget extends HTMLElement {
       if (!this.isOpen || !this.isVoiceMode) return;
       this.animationId = requestAnimationFrame(draw);
       
-      const bars = 5;
-      const barWidth = 6;
-      const gap = 4;
-      const totalWidth = (barWidth + gap) * bars - gap;
-      let startX = (canvas.width - totalWidth) / 2;
-      
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = CONFIG.theme.primary;
       
-      for (let i = 0; i < bars; i++) {
-        let height = 4;
-        if (this.isProcessing) {
-          height = 8 + Math.sin(Date.now() / 150 + i) * 4;
-          ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 200) * 0.2;
-        } else if (this.isListening || this.isSpeaking) {
-          if (this.dataArray && this.analyser) {
-            this.analyser.getByteFrequencyData(this.dataArray);
-            // Use frequency data to drive bar height
-            const segment = Math.floor(this.dataArray.length / bars);
-            const value = this.dataArray[i * segment] || 0;
-            height = (value / 4) + 6;
-          }
-          ctx.globalAlpha = 1;
-        } else {
-          height = 4;
-          ctx.globalAlpha = 0.3;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const baseRadius = 40;
+      
+      let pulse = 0;
+      if (this.isProcessing) {
+        pulse = Math.sin(Date.now() / 150) * 5;
+      } else if (this.isListening || this.isSpeaking) {
+        if (this.dataArray && this.analyser) {
+          this.analyser.getByteFrequencyData(this.dataArray);
+          const sum = this.dataArray.reduce((a, b) => a + b, 0);
+          const avg = sum / this.dataArray.length;
+          pulse = (avg / 255) * 30;
         }
-        
-        const y = (canvas.height - height) / 2;
-        this.roundRect(ctx, startX, y, barWidth, height, barWidth / 2);
-        ctx.fill();
-        startX += barWidth + gap;
       }
+      
+      // Draw concentric pulsing circles instead of bars
+      const radius = baseRadius + pulse;
+      
+      // Outer glow
+      const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.8, centerX, centerY, radius * 1.5);
+      gradient.addColorStop(0, `${CONFIG.theme.primary}44`);
+      gradient.addColorStop(1, `${CONFIG.theme.primary}00`);
+      
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius * 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // Main circle
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fillStyle = CONFIG.theme.primary;
+      ctx.globalAlpha = 1;
+      ctx.fill();
+      
+      // Mic icon is handled by the button overlaying this canvas
     };
     draw();
   }
