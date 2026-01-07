@@ -25,6 +25,7 @@ class AIVoiceWidget extends HTMLElement {
     this.isProcessing = false;
     this.isSpeaking = false;
     this.isVoiceMode = true;
+    this.isSettingsOpen = false;
     this.sessionId = this.getSessionId();
     this.messages = [];
     this.conversationBuffer = [];
@@ -506,13 +507,26 @@ class AIVoiceWidget extends HTMLElement {
     container.scrollTop = container.scrollHeight;
   }
 
+  toggleSettings() {
+    this.isSettingsOpen = !this.isSettingsOpen;
+    this.render();
+  }
+
+  updateVoiceSetting(key, value) {
+    this.voiceSettings[key] = value;
+    if (key === 'language' && this.recognition) {
+      this.recognition.lang = value === 'en' ? 'en-US' : value;
+    }
+    this.render();
+  }
+
   renderHeader() {
     const langCode = this.voiceSettings.language.toUpperCase();
     return `
       <div class="header">
         <span class="header-title">${this.businessName}</span>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <div class="settings-btn">${langCode}</div>
+          <button class="settings-btn" id="settings-toggle">${langCode}</button>
           <button class="mode-btn" id="mode-toggle" title="Toggle Chat Mode">
             ${this.isVoiceMode 
               ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>'
@@ -556,6 +570,24 @@ class AIVoiceWidget extends HTMLElement {
         }
         .mode-btn:hover { background: rgba(255,255,255,0.15); }
 
+        .settings-btn:hover { background: rgba(255,255,255,0.15); }
+
+        .settings-panel {
+          position: absolute; top: 60px; right: 20px;
+          background: #2d3748; border-radius: 12px;
+          padding: 16px; width: 200px; z-index: 100;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+          border: 1px solid rgba(255,255,255,0.1);
+          display: none; flex-direction: column; gap: 12px;
+        }
+        .settings-panel.open { display: flex; }
+        .setting-item { display: flex; flex-direction: column; gap: 4px; }
+        .setting-label { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+        .setting-select { 
+          background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+          color: white; border-radius: 6px; padding: 4px 8px; font-size: 13px; outline: none;
+        }
+
         .close-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 4px; display: flex; opacity: 0.7; transition: 0.2s; }
         .close-btn:hover { opacity: 1; }
         
@@ -593,6 +625,23 @@ class AIVoiceWidget extends HTMLElement {
       </style>
       <div class="widget-container ${this.isOpen ? 'open' : ''}">
         ${this.renderHeader()}
+        <div class="settings-panel ${this.isSettingsOpen ? 'open' : ''}">
+          <div class="setting-item">
+            <label class="setting-label">Language</label>
+            <select class="setting-select" id="lang-select">
+              <option value="en" ${this.voiceSettings.language === 'en' ? 'selected' : ''}>English</option>
+              <option value="es" ${this.voiceSettings.language === 'es' ? 'selected' : ''}>Spanish</option>
+              <option value="fr" ${this.voiceSettings.language === 'fr' ? 'selected' : ''}>French</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label class="setting-label">Voice Gender</label>
+            <select class="setting-select" id="gender-select">
+              <option value="female" ${this.voiceSettings.voiceGender === 'female' ? 'selected' : ''}>Female</option>
+              <option value="male" ${this.voiceSettings.voiceGender === 'male' ? 'selected' : ''}>Male</option>
+            </select>
+          </div>
+        </div>
         <div class="content">
           ${this.isVoiceMode ? `
             <div class="voice-view">
@@ -628,6 +677,12 @@ class AIVoiceWidget extends HTMLElement {
     
     const modeBtn = this.shadowRoot.getElementById("mode-toggle");
     if (modeBtn) modeBtn.onclick = () => this.toggleMode();
+
+    const settingsToggle = this.shadowRoot.getElementById("settings-toggle");
+    if (settingsToggle) settingsToggle.onclick = () => this.toggleSettings();
+    
+    this.shadowRoot.getElementById("lang-select")?.addEventListener("change", (e) => this.updateVoiceSetting('language', e.target.value));
+    this.shadowRoot.getElementById("gender-select")?.addEventListener("change", (e) => this.updateVoiceSetting('voiceGender', e.target.value));
 
     if (this.isVoiceMode) {
       const micBtn = this.shadowRoot.getElementById("voice-mic-btn");
