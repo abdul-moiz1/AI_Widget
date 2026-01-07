@@ -112,17 +112,17 @@ class AIVoiceWidget extends HTMLElement {
         this.recognition.lang = this.voiceSettings.language || 'en-US';
 
         this.recognition.onresult = (event) => {
-          let transcript = "";
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            transcript += event.results[i][0].transcript;
+          let fullTranscript = "";
+          for (let i = 0; i < event.results.length; ++i) {
+            fullTranscript += event.results[i][0].transcript;
           }
-          if (transcript) {
-            this.lastTranscript = transcript;
-            console.log("Transcript found:", transcript);
+          if (fullTranscript) {
+            this.lastTranscript = fullTranscript;
+            console.log("Full transcript:", fullTranscript);
             
             // Immediately update the status to show what was heard in real-time
             const status = this.shadowRoot.getElementById("voice-status");
-            if (status) status.textContent = transcript;
+            if (status) status.textContent = fullTranscript;
           }
         };
         
