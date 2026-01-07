@@ -23,11 +23,8 @@ class AIVoiceWidget extends HTMLElement {
     this.isListening = false;
     this.isProcessing = false;
     this.isSpeaking = false;
-    this.isVoiceMode = true;
     this.sessionId = this.getSessionId();
-    this.messages = [];
     this.conversationBuffer = [];
-    this.maxBufferSize = 10;
     this.audioContext = null;
     this.analyser = null;
     this.dataArray = null;
@@ -45,14 +42,20 @@ class AIVoiceWidget extends HTMLElement {
   }
 
   loadScripts() {
-    if (!window.ort) {
-      const script = document.createElement('script');
-      script.src = CONFIG.onnxUrl;
-      document.head.appendChild(script);
-    }
-    const vadScript = document.createElement('script');
-    vadScript.src = CONFIG.vadUrl;
-    document.head.appendChild(vadScript);
+    const scripts = [
+      { id: 'ort-script', src: CONFIG.onnxUrl },
+      { id: 'vad-script', src: CONFIG.vadUrl }
+    ];
+
+    scripts.forEach(s => {
+      if (!document.getElementById(s.id)) {
+        const script = document.createElement('script');
+        script.id = s.id;
+        script.src = s.src;
+        script.async = true;
+        document.head.appendChild(script);
+      }
+    });
   }
 
   async connectedCallback() {
@@ -72,10 +75,16 @@ class AIVoiceWidget extends HTMLElement {
     if (this.vad) {
       try { await this.vad.start(); return; } catch(e) {}
     }
+
     try {
       if (!window.vad) {
-        console.error("VAD library not loaded yet");
-        return;
+        // Retry logic for script loading
+        let attempts = 0;
+        while (!window.vad && attempts < 10) {
+          await new Promise(r => setTimeout(r, 500));
+          attempts++;
+        }
+        if (!window.vad) throw new Error("VAD library timeout");
       }
       
       if (!this.audioContext) {
@@ -104,6 +113,8 @@ class AIVoiceWidget extends HTMLElement {
       await this.vad.start();
     } catch (e) {
       console.error("VAD Setup Error:", e);
+      const status = this.shadowRoot.getElementById("voice-status");
+      if (status) status.textContent = "Voice error. Refreshing...";
     }
   }
 
@@ -255,22 +266,14 @@ class AIVoiceWidget extends HTMLElement {
   }
 
   renderHeader() {
-    const langCode = this.voiceSettings.language === "en" ? "En" : this.voiceSettings.language === "es" ? "Es" : "Ar";
+    const langCode = this.voiceSettings.language.toUpperCase();
     return `
       <div class="header">
         <span class="header-title">${this.businessName}</span>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button class="settings-btn" id="settings-btn" title="Voice Settings">${langCode}</button>
-          <div class="settings-panel" id="settings-panel">
-            <div class="option-label">Language</div>
-            <div class="option-grid">
-              <button class="option ${this.voiceSettings.language === 'en' ? 'active' : ''}" data-lang="en">EN</button>
-              <button class="option ${this.voiceSettings.language === 'es' ? 'active' : ''}" data-lang="es">ES</button>
-              <button class="option ${this.voiceSettings.language === 'ar' ? 'active' : ''}" data-lang="ar">AR</button>
-            </div>
-          </div>
-          <button class="mode-btn mobile-only" id="close-btn-header">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <div class="settings-btn">${langCode}</div>
+          <button class="close-btn" id="close-btn-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
       </div>
@@ -286,39 +289,37 @@ class AIVoiceWidget extends HTMLElement {
           font-family: 'Inter', system-ui, sans-serif;
         }
         .widget-container {
-          position: fixed; bottom: 90px; right: 24px;
-          width: 380px; height: 600px; max-height: calc(100vh - 120px);
-          background: rgba(26, 32, 44, 0.9);
-          backdrop-filter: blur(20px) saturate(180%);
-          -webkit-backdrop-filter: blur(20px) saturate(180%);
+          position: fixed; bottom: 100px; right: 24px;
+          width: 360px; height: 500px;
+          background: #1e293b;
           border-radius: 24px;
           display: flex; flex-direction: column; overflow: hidden;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255,255,255,0.1);
-          opacity: 0; transform: translateY(20px) scale(0.98); pointer-events: none;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+          opacity: 0; transform: translateY(20px); pointer-events: none;
+          transition: all 0.3s ease;
         }
-        .widget-container.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
-        .header { padding: 16px 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; }
-        .header-title { font-weight: 700; color: #fff; font-size: 15px; }
-        .settings-btn { 
-          background: rgba(255,255,255,0.08); border: none; color: white; 
-          cursor: pointer; padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 600;
-        }
-        .content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; }
-        .mic-wrap { position: relative; width: 160px; height: 160px; display: flex; align-items: center; justify-content: center; }
-        #waveform { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
+        .widget-container.open { opacity: 1; transform: translateY(0); pointer-events: all; }
+        .header { padding: 20px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .header-title { font-weight: 700; color: #fff; font-size: 16px; }
+        .settings-btn { background: rgba(255,255,255,0.1); color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+        .close-btn { background: none; border: none; color: #fff; cursor: pointer; padding: 4px; display: flex; opacity: 0.7; transition: 0.2s; }
+        .close-btn:hover { opacity: 1; }
+        .content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 20px; }
+        .mic-wrap { position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; }
+        #waveform { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         .voice-mic-btn { 
           width: 80px; height: 80px; border-radius: 50%; border: none; 
           background: var(--primary); color: #000; cursor: pointer; 
           display: flex; align-items: center; justify-content: center; z-index: 2;
+          box-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
         }
-        .voice-mic-btn.listening { background: #ff4b4b; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,75,75,0.4); } 70% { box-shadow: 0 0 0 20px rgba(255,75,75,0); } 100% { box-shadow: 0 0 0 0 rgba(255,75,75,0); } }
-        #voice-status { font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 500; text-transform: uppercase; }
+        .voice-mic-btn.listening { background: #ef4444; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        #voice-status { font-size: 14px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
         .toggle-btn { 
-          width: 56px; height: 56px; border-radius: 18px; background: var(--primary); 
+          width: 60px; height: 60px; border-radius: 20px; background: var(--primary); 
           color: #000; display: flex; align-items: center; justify-content: center; 
-          cursor: pointer; box-shadow: 0 10px 20px rgba(0, 229, 255, 0.2); 
+          cursor: pointer; box-shadow: 0 10px 20px rgba(0, 229, 255, 0.3); 
         }
         .toggle-btn.open { display: none; }
       </style>
@@ -328,14 +329,14 @@ class AIVoiceWidget extends HTMLElement {
           <div class="mic-wrap">
             <canvas id="waveform" width="140" height="140"></canvas>
             <button class="voice-mic-btn" id="voice-mic-btn">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
             </button>
           </div>
           <div id="voice-status">Tap to speak</div>
         </div>
       </div>
       <div class="toggle-btn ${this.isOpen ? 'open' : ''}" id="toggle-trigger">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
       </div>
     `;
 
