@@ -183,9 +183,10 @@ class AIVoiceWidget extends HTMLElement {
           
           // Wait longer for the final transcript to arrive
           // VAD usually detects end of speech faster than Speech API
+          // Increased timeout to wait for more transcription data
           setTimeout(() => {
-            // Check if we still have a very short transcript, maybe wait a bit more
-            const finalWait = this.lastTranscript.length < 10 ? 1500 : 800;
+            // Check if we still have a very short transcript, wait even longer if so
+            const finalWait = this.lastTranscript.length < 15 ? 2000 : 1200;
             
             setTimeout(() => {
               if (this.recognition) {
@@ -194,19 +195,19 @@ class AIVoiceWidget extends HTMLElement {
                 } catch (e) {}
               }
               
-              // Final check before processing
+              // Final check before processing - added extra buffer
               setTimeout(() => {
                 this.isListening = false;
                 console.log("Processing with final transcript:", this.lastTranscript);
-                if (this.lastTranscript) {
+                if (this.lastTranscript && this.lastTranscript.trim().length > 1) {
                   this.processAudio(audio, this.lastTranscript);
                 } else {
                   // If still empty after long wait, it's a catch failure
                   this.processAudio(audio, "");
                 }
-              }, 300);
+              }, 500);
             }, finalWait);
-          }, 200);
+          }, 300);
         },
         onVADMisfire: () => {
           this.isListening = false;
@@ -216,6 +217,11 @@ class AIVoiceWidget extends HTMLElement {
              this.setupVAD();
           }
         },
+        // Increased minSpeechFrames and redirection parameters to be less sensitive to pauses
+        minSpeechFrames: 8,
+        positiveSpeechThreshold: 0.85,
+        negativeSpeechThreshold: 0.75,
+        redemptionFrames: 25, // Wait longer before deciding speech has ended
         onnxWASMBasePath: "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
         baseAssetPath: "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
       });
